@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info:
+  title: Palmetto Energy Intelligence Bem Health API
+  version: v0.32.2-19a9666
+servers:
+- url: https://ei.palmetto.com
+tags:
+- name: Health
+paths:
+  /api/v0/health:
+    get:
+      summary: Health
+      description: Check the health of the service
+      operationId: health_api_v0_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      tags:
+      - Health
+components:
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key

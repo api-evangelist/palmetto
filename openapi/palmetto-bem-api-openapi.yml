@@ -1,0 +1,4734 @@
+openapi: 3.1.0
+info:
+  title: Palmetto Energy Intelligence Bem API
+  version: v0.32.2-19a9666
+servers:
+- url: https://ei.palmetto.com
+tags:
+- name: Bem
+paths:
+  /api/v0/bem/calculate:
+    post:
+      summary: Calculate
+      description: Calculate energy consumption, production, costs and emissions
+      operationId: calculate_api_v0_bem_calculate_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateRequest'
+            examples:
+              example_1:
+                value:
+                  location:
+                    latitude: 37.7749
+                    longitude: -122.4194
+                  parameters:
+                    clip_by: inner
+                    from_datetime: '2023-01-01T00:00:00'
+                    group_by: month
+                    interval_format: long
+                    to_datetime: '2024-01-01T00:00:00'
+                    variables:
+                    - consumption.electricity
+                  consumption:
+                    actuals:
+                    - from_datetime: '2023-01-01T00:00:00'
+                      to_datetime: '2024-01-01T00:00:00'
+                      value: 3774
+                      variable: consumption.electricity
+                    attributes:
+                      baseline:
+                      - name: building_type
+                        value: Single-Family Detached
+                      hypothetical:
+                      - name: building_type
+                        value: Single-Family Detached
+                    calibration:
+                      apply_residuals: true
+                      method: uniform-mean
+                      sample_size: 35
+                  production:
+                    actuals:
+                    - from_datetime: '2023-01-01T00:00:00'
+                      to_datetime: '2024-01-01T00:00:00'
+                      value: 7.3
+                      variable: production.electricity
+                    attributes:
+                      baseline:
+                      - name: panel_arrays
+                        value:
+                        - azimuth: 180.0
+                          capacity: 10.0
+                          tilt: 30.0
+                      hypothetical: []
+                    calibration:
+                      method: uniform-mean
+                  storage:
+                    attributes:
+                      baseline:
+                      - name: capacity
+                        value: 10
+                      - name: power
+                        value: 5
+                      - name: capacity_recommendation_quantile
+                        value: 0.5
+                      hypothetical: []
+                  costs:
+                    emission_rates:
+                      electricity:
+                        units: kgCO2e/kWh
+                        value: 0.47045
+                      fossil_fuel:
+                        units: kgCO2e/kWh
+                        value: 0.1872057318321392
+                    utility_rates:
+                      electricity:
+                        units: $/kWh
+                        value: 0.29305
+                      fossil_fuel:
+                        units: $/kWh
+                        value: 0.069771
+                      pv_buyback:
+                        units: $/kWh
+                        value: 0.2
+                      pv_ppa:
+                        units: $/kWh
+                        value: 0.26
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+      tags:
+      - Bem
+components:
+  schemas:
+    FreezerExtraEfficiency:
+      properties:
+        name:
+          type: string
+          const: freezer_extra_efficiency
+          title: Name
+          default: freezer_extra_efficiency
+        value:
+          type: number
+          maximum: 1000.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: FreezerExtraEfficiency
+      description: Extra Freezer Annual Energy Consumption [kWh]
+    HeatingFuelTypeEnum:
+      type: string
+      enum:
+      - Electric
+      - Fossil Fuel
+      title: HeatingFuelTypeEnum
+    ConsumptionCalibration:
+      properties:
+        method:
+          $ref: '#/components/schemas/CalibrationMethod'
+          title: Method
+          default: uniform-mean
+        apply_residuals:
+          type: boolean
+          title: Apply Residuals
+          description: Apply calibration residuals to total consumption to ensure that the returned loads will sum up to the actuals provided. Otherwise, the estimated building load that is closest to the actual consumption data will be used without adjustment. Note that the sum of consumption end uses may no longer equal the total consumption.
+          default: true
+        sample_size:
+          type: integer
+          title: Sample Size
+          description: Number of buildings to sample from. Larger sample sizes may increase accuracy but also increase computation time.
+          default: 35
+          ge: 1
+          le: 100
+        sample_seed:
+          type: integer
+          title: Sample Seed
+          description: Random seed for sampling buildings from the ensemble.
+        ensemble_aggregation_method:
+          $ref: '#/components/schemas/EnsembleAggregationMethod'
+          title: Ensemble Aggregation Method
+          default: nearest
+        use_actual_weather:
+          type: boolean
+          title: Use Actual Weather
+          description: 'Use actual historical weather (and forecast for future periods) to calibrate consumption actuals. Auto‑enabled if any other use_actual_weather flag in the request is true. NOTE: Using actual weather incurs additional per-request charges.'
+          default: false
+      type: object
+      title: ConsumptionCalibration
+      description: Payload Schema for Consumption Calibration
+    HVACAirDistributionEfficiency:
+      properties:
+        name:
+          type: string
+          const: hvac_air_distribution_efficiency
+          title: Name
+          default: hvac_air_distribution_efficiency
+        value:
+          type: number
+          maximum: 1.0
+          minimum: 0.1
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACAirDistributionEfficiency
+      description: 'HVAC Ducts Efficiency as a fraction of the total energy consumed
+
+        due to poor supply and return duct design and/or improper air balancing
+
+        Ignored when hvac_heating_ducts and hvac_cooling_ducts are False'
+    StorageElectricityStateOfCharge:
+      type: number
+      minimum: 0.0
+      title: StorageElectricityStateOfCharge
+    COPEfficiencyCurve1:
+      type: number
+      maximum: 10.0
+      minimum: 0.1
+      title: COPEfficiencyCurve1
+      description: Temparature-based Parameter Curve
+    ConsumptionElectricityHotWater:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityHotWater
+    Value1:
+      type: number
+      minimum: 0.0
+      title: Value1
+    ConsumptionFossilFuelHeating:
+      type: number
+      minimum: 0.0
+      title: ConsumptionFossilFuelHeating
+    ProductionAttributesList1:
+      oneOf:
+      - $ref: '#/components/schemas/PanelArrays'
+      - $ref: '#/components/schemas/NominalOperatingCellTemp'
+      - $ref: '#/components/schemas/PowerTempCoefficient'
+      - $ref: '#/components/schemas/InverterEfficiency'
+      - $ref: '#/components/schemas/DcToAcRatio'
+      - $ref: '#/components/schemas/SoilingLoss'
+      - $ref: '#/components/schemas/ShadingLoss'
+      - $ref: '#/components/schemas/SnowLoss'
+      - $ref: '#/components/schemas/MismatchLoss'
+      - $ref: '#/components/schemas/WiringLoss'
+      - $ref: '#/components/schemas/ConnectionsLoss'
+      - $ref: '#/components/schemas/LightInducedDegradationLoss'
+      - $ref: '#/components/schemas/NameplateRatingLoss'
+      - $ref: '#/components/schemas/AgeLoss'
+      - $ref: '#/components/schemas/AvailabilityLoss'
+      title: ProductionAttributesList1
+      discriminator:
+        propertyName: name
+        mapping:
+          age_loss: '#/components/schemas/AgeLoss'
+          availability_loss: '#/components/schemas/AvailabilityLoss'
+          connections_loss: '#/components/schemas/ConnectionsLoss'
+          dc_to_ac_ratio: '#/components/schemas/DcToAcRatio'
+          inverter_efficiency: '#/components/schemas/InverterEfficiency'
+          light_induced_degradation_loss: '#/components/schemas/LightInducedDegradationLoss'
+          mismatch_loss: '#/components/schemas/MismatchLoss'
+          nameplate_rating_loss: '#/components/schemas/NameplateRatingLoss'
+          nominal_operating_cell_temp: '#/components/schemas/NominalOperatingCellTemp'
+          panel_arrays: '#/components/schemas/PanelArrays'
+          power_temp_coefficient: '#/components/schemas/PowerTempCoefficient'
+          shading_loss: '#/components/schemas/ShadingLoss'
+          snow_loss: '#/components/schemas/SnowLoss'
+          soiling_loss: '#/components/schemas/SoilingLoss'
+          wiring_loss: '#/components/schemas/WiringLoss'
+    UsageLevelEnum:
+      type: string
+      enum:
+      - Low
+      - Average
+      - High
+      title: UsageLevelEnum
+    ConsumptionElectricityEv:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityEv
+    HVACDuctsInsulation:
+      properties:
+        name:
+          type: string
+          const: hvac_ducts_insulation
+          title: Name
+          default: hvac_ducts_insulation
+        value:
+          type: integer
+          maximum: 8.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACDuctsInsulation
+      description: 'R-Value of HVAC Ducts Insulation
+
+        Ignored when hvac_heating_ducts and hvac_cooling_ducts are False'
+    ThermalDemandCoolingUnutilized:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandCoolingUnutilized
+    CapacityCurve1:
+      type: number
+      minimum: 0.0
+      title: CapacityCurve1
+      description: Temparature-based Parameter Curve
+    UtilityRatesInput:
+      properties:
+        electricity:
+          anyOf:
+          - $ref: '#/components/schemas/UtilityFlatRateInput'
+          - $ref: '#/components/schemas/Tariff'
+          title: Electricity
+          description: Buy rate or Tariff for electricity
+        fossil_fuel:
+          $ref: '#/components/schemas/UtilityFlatRateInput'
+          title: Fossil Fuel
+          description: Buy rate for fossil fuel (e.g. natural gas)
+        pv_ppa:
+          $ref: '#/components/schemas/UtilityFlatRateInput'
+          title: Pv Ppa
+          description: Buy rate for energy generated by PV system
+        pv_buyback:
+          $ref: '#/components/schemas/UtilityFlatRateInput'
+          title: Pv Buyback
+          description: Sell rate for excess PV electricity exported to the grid. Cannot be used when a Tariff for electricity is passed.
+      type: object
+      title: UtilityRatesInput
+      description: Utility energy rates information
+    Pool:
+      properties:
+        name:
+          type: string
+          const: pool
+          title: Name
+          default: pool
+        value:
+          $ref: '#/components/schemas/PoolEnum'
+      type: object
+      required:
+      - value
+      title: Pool
+      description: Pool Type
+    ClothesWasherHotWaterUsage:
+      properties:
+        name:
+          type: string
+          const: clothes_washer_hot_water_usage
+          title: Name
+          default: clothes_washer_hot_water_usage
+        value:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: ClothesWasherHotWaterUsage
+      description: Clothers Washer Hot Water usage as a fraction of all loads using a hot water setting
+    ThermalDemandHeatingUnmet:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandHeatingUnmet
+    FoundationTypeEnum:
+      type: string
+      enum:
+      - Slab
+      - Ambient
+      - Vented Crawlspace
+      - Unvented Crawlspace
+      - Unheated Basement
+      - Heated Basement
+      title: FoundationTypeEnum
+    BatteryDispatchStrategy:
+      properties:
+        name:
+          type: string
+          const: dispatch_strategy
+          title: Name
+          default: dispatch_strategy
+        value:
+          $ref: '#/components/schemas/DispatchStrategy'
+      type: object
+      required:
+      - value
+      title: BatteryDispatchStrategy
+      description: Dispatch Strategy
+    ClothesDryerFuelEnum:
+      type: string
+      enum:
+      - Electric
+      - Gas
+      title: ClothesDryerFuelEnum
+    Variable:
+      type: string
+      enum:
+      - consumption.electricity
+      - consumption.fossil_fuel
+      - costs.electricity
+      - costs.fossil_fuel
+      title: Variable
+    WiringLoss:
+      properties:
+        name:
+          type: string
+          const: wiring_loss
+          title: Name
+          default: wiring_loss
+        value:
+          type: number
+          title: Value
+          default: 0.02
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: WiringLoss
+      description: 'Resistive power losses in DC and AC wiring; combined multiplicatively with other
+
+        DC losses.'
+    Setpoint1:
+      type: number
+      maximum: 38.0
+      minimum: 10.0
+      title: Setpoint1
+      description: HVAC Setpoint Temperature or 24-hr Schedule
+    Limit:
+      type: number
+      minimum: 0.0
+      title: Limit
+      description: Upper limit of this band (e.g. kWh for consumption, kW for demand)
+    WindowToWallRatio:
+      properties:
+        name:
+          type: string
+          const: window_to_wall_ratio
+          title: Name
+          default: window_to_wall_ratio
+        value:
+          type: number
+          maximum: 0.3
+          minimum: 0.06
+          title: Value
+      type: object
+      required:
+      - value
+      title: WindowToWallRatio
+      description: Window to Wall Ratio
+    GridElectricityExport:
+      type: number
+      minimum: 0.0
+      title: GridElectricityExport
+    Vintage:
+      properties:
+        name:
+          type: string
+          const: vintage
+          title: Name
+          default: vintage
+        value:
+          $ref: '#/components/schemas/VintageEnum'
+      type: object
+      required:
+      - value
+      title: Vintage
+      description: Vintage Year
+    CalculateResponse:
+      properties:
+        version:
+          type: string
+          title: Version
+          default: v2.46.2-9b9d19f
+        detail:
+          type: string
+          title: Detail
+          default: success
+        meta:
+          $ref: '#/components/schemas/Meta'
+        data:
+          $ref: '#/components/schemas/Data'
+      type: object
+      required:
+      - meta
+      - data
+      title: CalculateResponse
+      description: Payload Schema for a Calculate Response
+    StorageElectricityCharge:
+      type: number
+      minimum: 0.0
+      title: StorageElectricityCharge
+    CeilingFan:
+      properties:
+        name:
+          type: string
+          const: ceiling_fan
+          title: Name
+          default: ceiling_fan
+        value:
+          type: number
+          maximum: 175.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: CeilingFan
+      description: Ceiling Fan Rated Annual Energy Consumption [kWh]
+    Timezone:
+      type: string
+      enum:
+      - Africa/Abidjan
+      - Africa/Accra
+      - Africa/Addis_Ababa
+      - Africa/Algiers
+      - Africa/Asmara
+      - Africa/Asmera
+      - Africa/Bamako
+      - Africa/Bangui
+      - Africa/Banjul
+      - Africa/Bissau
+      - Africa/Blantyre
+      - Africa/Brazzaville
+      - Africa/Bujumbura
+      - Africa/Cairo
+      - Africa/Casablanca
+      - Africa/Ceuta
+      - Africa/Conakry
+      - Africa/Dakar
+      - Africa/Dar_es_Salaam
+      - Africa/Djibouti
+      - Africa/Douala
+      - Africa/El_Aaiun
+      - Africa/Freetown
+      - Africa/Gaborone
+      - Africa/Harare
+      - Africa/Johannesburg
+      - Africa/Juba
+      - Africa/Kampala
+      - Africa/Khartoum
+      - Africa/Kigali
+      - Africa/Kinshasa
+      - Africa/Lagos
+      - Africa/Libreville
+      - Africa/Lome
+      - Africa/Luanda
+      - Africa/Lubumbashi
+      - Africa/Lusaka
+      - Africa/Malabo
+      - Africa/Maputo
+      - Africa/Maseru
+      - Africa/Mbabane
+      - Africa/Mogadishu
+      - Africa/Monrovia
+      - Africa/Nairobi
+      - Africa/Ndjamena
+      - Africa/Niamey
+      - Africa/Nouakchott
+      - Africa/Ouagadougou
+      - Africa/Porto-Novo
+      - Africa/Sao_Tome
+      - Africa/Timbuktu
+      - Africa/Tripoli
+      - Africa/Tunis
+      - Africa/Windhoek
+      - America/Adak
+      - America/Anchorage
+      - America/Anguilla
+      - America/Antigua
+      - America/Araguaina
+      - America/Argentina/Buenos_Aires
+      - America/Argentina/Catamarca
+      - America/Argentina/ComodRivadavia
+      - America/Argentina/Cordoba
+      - America/Argentina/Jujuy
+      - America/Argentina/La_Rioja
+      - America/Argentina/Mendoza
+      - America/Argentina/Rio_Gallegos
+      - America/Argentina/Salta
+      - America/Argentina/San_Juan
+      - America/Argentina/San_Luis
+      - America/Argentina/Tucuman
+      - America/Argentina/Ushuaia
+      - America/Aruba
+      - America/Asuncion
+      - America/Atikokan
+      - America/Atka
+      - America/Bahia
+      - America/Bahia_Banderas
+      - America/Barbados
+      - America/Belem
+      - America/Belize
+      - America/Blanc-Sablon
+      - America/Boa_Vista
+      - America/Bogota
+      - America/Boise
+      - America/Buenos_Aires
+      - America/Cambridge_Bay
+      - America/Campo_Grande
+      - America/Cancun
+      - America/Caracas
+      - America/Catamarca
+      - America/Cayenne
+      - America/Cayman
+      - America/Chicago
+      - America/Chihuahua
+      - America/Ciudad_Juarez
+      - America/Coral_Harbour
+      - America/Cordoba
+      - America/Costa_Rica
+      - America/Coyhaique
+      - America/Creston
+      - America/Cuiaba
+      - America/Curacao
+      - America/Danmarkshavn
+      - America/Dawson
+      - America/Dawson_Creek
+      - America/Denver
+      - America/Detroit
+      - America/Dominica
+      - America/Edmonton
+      - America/Eirunepe
+      - America/El_Salvador
+      - America/Ensenada
+      - America/Fort_Nelson
+      - America/Fort_Wayne
+      - America/Fortaleza
+      - America/Glace_Bay
+      - America/Godthab
+      - America/Goose_Bay
+      - America/Grand_Turk
+      - America/Grenada
+      - America/Guadeloupe
+      - America/Guatemala
+      - America/Guayaquil
+      - America/Guyana
+      - America/Halifax
+      - America/Havana
+      - America/Hermosillo
+      - America/Indiana/Indianapolis
+      - America/Indiana/Knox
+      - America/Indiana/Marengo
+      - America/Indiana/Petersburg
+      - America/Indiana/Tell_City
+      - America/Indiana/Vevay
+      - America/Indiana/Vincennes
+      - America/Indiana/Winamac
+      - America/Indianapolis
+      - America/Inuvik
+      - America/Iqaluit
+      - America/Jamaica
+      - America/Jujuy
+      - America/Juneau
+      - America/Kentucky/Louisville
+      - America/Kentucky/Monticello
+      - America/Knox_IN
+      - America/Kralendijk
+      - America/La_Paz
+      - America/Lima
+      - America/Los_Angeles
+      - America/Louisville
+      - America/Lower_Princes
+      - America/Maceio
+      - America/Managua
+      - America/Manaus
+      - America/Marigot
+      - America/Martinique
+      - America/Matamoros
+      - America/Mazatlan
+      - America/Mendoza
+      - America/Menominee
+      - America/Merida
+      - America/Metlakatla
+      - America/Mexico_City
+      - America/Miquelon
+      - America/Moncton
+      - America/Monterrey
+      - America/Montevideo
+      - America/Montreal
+      - America/Montserrat
+      - America/Nassau
+      - America/New_York
+      - America/Nipigon
+      - America/Nome
+      - America/Noronha
+      - America/North_Dakota/Beulah
+      - America/North_Dakota/Center
+      - America/North_Dakota/New_Salem
+      - America/Nuuk
+      - America/Ojinaga
+      - America/Panama
+      - America/Pangnirtung
+      - America/Paramaribo
+      - America/Phoenix
+      - America/Port-au-Prince
+      - America/Port_of_Spain
+      - America/Porto_Acre
+      - America/Porto_Velho
+      - America/Puerto_Rico
+      - America/Punta_Arenas
+      - America/Rainy_River
+      - America/Rankin_Inlet
+      - America/Recife
+      - America/Regina
+      - America/Resolute
+      - America/Rio_Branco
+      - America/Rosario
+      - America/Santa_Isabel
+      - America/Santarem
+      - America/Santiago
+      - America/Santo_Domingo
+      - America/Sao_Paulo
+      - America/Scoresbysund
+      - America/Shiprock
+      - America/Sitka
+      - America/St_Barthelemy
+      - America/St_Johns
+      - America/St_Kitts
+      - America/St_Lucia
+      - America/St_Thomas
+      - America/St_Vincent
+      - America/Swift_Current
+      - America/Tegucigalpa
+      - America/Thule
+      - America/Thunder_Bay
+      - America/Tijuana
+      - America/Toronto
+      - America/Tortola
+      - America/Vancouver
+      - America/Virgin
+      - America/Whitehorse
+      - America/Winnipeg
+      - America/Yakutat
+      - America/Yellowknife
+      - Antarctica/Casey
+      - Antarctica/Davis
+      - Antarctica/DumontDUrville
+      - Antarctica/Macquarie
+      - Antarctica/Mawson
+      - Antarctica/McMurdo
+      - Antarctica/Palmer
+      - Antarctica/Rothera
+      - Antarctica/South_Pole
+      - Antarctica/Syowa
+      - Antarctica/Troll
+      - Antarctica/Vostok
+      - Arctic/Longyearbyen
+      - Asia/Aden
+      - Asia/Almaty
+      - Asia/Amman
+      - Asia/Anadyr
+      - Asia/Aqtau
+      - Asia/Aqtobe
+      - Asia/Ashgabat
+      - Asia/Ashkhabad
+      - Asia/Atyrau
+      - Asia/Baghdad
+      - Asia/Bahrain
+      - Asia/Baku
+      - Asia/Bangkok
+      - Asia/Barnaul
+      - Asia/Beirut
+      - Asia/Bishkek
+      - Asia/Brunei
+      - Asia/Calcutta
+      - Asia/Chita
+      - Asia/Choibalsan
+      - Asia/Chongqing
+      - Asia/Chungking
+      - Asia/Colombo
+      - Asia/Dacca
+      - Asia/Damascus
+      - Asia/Dhaka
+      - Asia/Dili
+      - Asia/Dubai
+      - Asia/Dushanbe
+      - Asia/Famagusta
+      - Asia/Gaza
+      - Asia/Harbin
+      - Asia/Hebron
+      - Asia/Ho_Chi_Minh
+      - Asia/Hong_Kong
+      - Asia/Hovd
+      - Asia/Irkutsk
+      - Asia/Istanbul
+      - Asia/Jakarta
+      - Asia/Jayapura
+      - Asia/Jerusalem
+      - Asia/Kabul
+      - Asia/Kamchatka
+      - Asia/Karachi
+      - Asia/Kashgar
+      - Asia/Kathmandu
+      - Asia/Katmandu
+      - Asia/Khandyga
+      - Asia/Kolkata
+      - Asia/Krasnoyarsk
+      - Asia/Kuala_Lumpur
+      - Asia/Kuching
+      - Asia/Kuwait
+      - Asia/Macao
+      - Asia/Macau
+      - Asia/Magadan
+      - Asia/Makassar
+      - Asia/Manila
+      - Asia/Muscat
+      - Asia/Nicosia
+      - Asia/Novokuznetsk
+      - Asia/Novosibirsk
+      - Asia/Omsk
+      - Asia/Oral
+      - Asia/Phnom_Penh
+      - Asia/Pontianak
+      - Asia/Pyongyang
+      - Asia/Qatar
+      - Asia/Qostanay
+      - Asia/Qyzylorda
+      - Asia/Rangoon
+      - Asia/Riyadh
+      - Asia/Saigon
+      - Asia/Sakhalin
+      - Asia/Samarkand
+      - Asia/Seoul
+      - Asia/Shanghai
+      - Asia/Singapore
+      - Asia/Srednekolymsk
+      - Asia/Taipei
+      - Asia/Tashkent
+      - Asia/Tbilisi
+      - Asia/Tehran
+      - Asia/Tel_Aviv
+      - Asia/Thimbu
+      - Asia/Thimphu
+      - Asia/Tokyo
+      - Asia/Tomsk
+      - Asia/Ujung_Pandang
+      - Asia/Ulaanbaatar
+      - Asia/Ulan_Bator
+      - Asia/Urumqi
+      - Asia/Ust-Nera
+      - Asia/Vientiane
+      - Asia/Vladivostok
+      - Asia/Yakutsk
+      - Asia/Yangon
+      - Asia/Yekaterinburg
+      - Asia/Yerevan
+      - Atlantic/Azores
+      - Atlantic/Bermuda
+      - Atlantic/Canary
+      - Atlantic/Cape_Verde
+      - Atlantic/Faeroe
+      - Atlantic/Faroe
+      - Atlantic/Jan_Mayen
+      - Atlantic/Madeira
+      - Atlantic/Reykjavik
+      - Atlantic/South_Georgia
+      - Atlantic/St_Helena
+      - Atlantic/Stanley
+      - Australia/ACT
+      - Australia/Adelaide
+      - Australia/Brisbane
+      - Australia/Broken_Hill
+      - Australia/Canberra
+      - Australia/Currie
+      - Australia/Darwin
+      - Australia/Eucla
+      - Australia/Hobart
+      - Australia/LHI
+      - Australia/Lindeman
+      - Australia/Lord_Howe
+      - Australia/Melbourne
+      - Australia/NSW
+      - Australia/North
+      - Australia/Perth
+      - Australia/Queensland
+      - Australia/South
+      - Australia/Sydney
+      - Australia/Tasmania
+      - Australia/Victoria
+      - Australia/West
+      - Australia/Yancowinna
+      - Brazil/Acre
+      - Brazil/DeNoronha
+      - Brazil/East
+      - Brazil/West
+      - CET
+      - CST6CDT
+      - Canada/Atlantic
+      - Canada/Central
+      - Canada/Eastern
+      - Canada/Mountain
+      - Canada/Newfoundland
+      - Canada/Pacific
+      - Canada/Saskatchewan
+      - Canada/Yukon
+      - Chile/Continental
+      - Chile/EasterIsland
+      - Cuba
+      - EET
+      - EST
+      - EST5EDT
+      - Egypt
+      - Eire
+      - Etc/GMT
+      - Etc/GMT+0
+      - Etc/GMT+1
+      - Etc/GMT+10
+      - Etc/GMT+11
+      - Etc/GMT+12
+      - Etc/GMT+2
+      - Etc/GMT+3
+      - Etc/GMT+4
+      - Etc/GMT+5
+      - Etc/GMT+6
+      - Etc/GMT+7
+      - Etc/GMT+8
+      - Etc/GMT+9
+      - Etc/GMT-0
+      - Etc/GMT-1
+      - Etc/GMT-10
+      - Etc/GMT-11
+      - Etc/GMT-12
+      - Etc/GMT-13
+      - Etc/GMT-14
+      - Etc/GMT-2
+      - Etc/GMT-3
+      - Etc/GMT-4
+      - Etc/GMT-5
+      - Etc/GMT-6
+      - Etc/GMT-7
+      - Etc/GMT-8
+      - Etc/GMT-9
+      - Etc/GMT0
+      - Etc/Greenwich
+      - Etc/UCT
+      - Etc/UTC
+      - Etc/Universal
+      - Etc/Zulu
+      - Europe/Amsterdam
+      - Europe/Andorra
+      - Europe/Astrakhan
+      - Europe/Athens
+      - Europe/Belfast
+      - Europe/Belgrade
+      - Europe/Berlin
+      - Europe/Bratislava
+      - Europe/Brussels
+      - Europe/Bucharest
+      - Europe/Budapest
+      - Europe/Busingen
+      - Europe/Chisinau
+      - Europe/Copenhagen
+      - Europe/Dublin
+      - Europe/Gibraltar
+      - Europe/Guernsey
+      - Europe/Helsinki
+      - Europe/Isle_of_Man
+      - Europe/Istanbul
+      - Europe/Jersey
+      - Europe/Kaliningrad
+      - Europe/Kiev
+      - Europe/Kirov
+      - Europe/Kyiv
+      - Europe/Lisbon
+      - Europe/Ljubljana
+      - Europe/London
+      - Europe/Luxembourg
+      - Europe/Madrid
+      - Europe/Malta
+      - Europe/Mariehamn
+      - Europe/Minsk
+      - Europe/Monaco
+      - Europe/Moscow
+      - Europe/Nicosia
+      - Europe/Oslo
+      - Europe/Paris
+      - Europe/Podgorica
+      - Europe/Prague
+      - Europe/Riga
+      - Europe/Rome
+      - Europe/Samara
+      - Europe/San_Marino
+      - Europe/Sarajevo
+      - Europe/Saratov
+      - Europe/Simferopol
+      - Europe/Skopje
+      - Europe/Sofia
+      - Europe/Stockholm
+      - Europe/Tallinn
+      - Europe/Tirane
+      - Europe/Tiraspol
+      - Europe/Ulyanovsk
+      - Europe/Uzhgorod
+      - Europe/Vaduz
+      - Europe/Vatican
+      - Europe/Vienna
+      - Europe/Vilnius
+      - Europe/Volgograd
+      - Europe/Warsaw
+      - Europe/Zagreb
+      - Europe/Zaporozhye
+      - Europe/Zurich
+      - Factory
+      - GB
+      - GB-Eire
+      - GMT
+      - GMT+0
+      - GMT-0
+      - GMT0
+      - Greenwich
+      - HST
+      - Hongkong
+      - Iceland
+      - Indian/Antananarivo
+      - Indian/Chagos
+      - Indian/Christmas
+      - Indian/Cocos
+      - Indian/Comoro
+      - Indian/Kerguelen
+      - Indian/Mahe
+      - Indian/Maldives
+      - Indian/Mauritius
+      - Indian/Mayotte
+      - Indian/Reunion
+      - Iran
+      - Israel
+      - Jamaica
+      - Japan
+      - Kwajalein
+      - Libya
+      - MET
+      - MST
+      - MST7MDT
+      - Mexico/BajaNorte
+      - Mexico/BajaSur
+      - Mexico/General
+      - NZ
+      - NZ-CHAT
+      - Navajo
+      - PRC
+      - PST8PDT
+      - Pacific/Apia
+      - Pacific/Auckland
+      - Pacific/Bougainville
+      - Pacific/Chatham
+      - Pacific/Chuuk
+      - Pacific/Easter
+      - Pacific/Efate
+      - Pacific/Enderbury
+      - Pacific/Fakaofo
+      - Pacific/Fiji
+      - Pacific/Funafuti
+      - Pacific/Galapagos
+      - Pacific/Gambier
+      - Pacific/Guadalcanal
+      - Pacific/Guam
+      - Pacific/Honolulu
+      - Pacific/Johnston
+      - Pacific/Kanton
+      - Pacific/Kiritimati
+      - Pacific/Kosrae
+      - Pacific/Kwajalein
+      - Pacific/Majuro
+      - Pacific/Marquesas
+      - Pacific/Midway
+      - Pacific/Nauru
+      - Pacific/Niue
+      - Pacific/Norfolk
+      - Pacific/Noumea
+      - Pacific/Pago_Pago
+      - Pacific/Palau
+      - Pacific/Pitcairn
+      - Pacific/Pohnpei
+      - Pacific/Ponape
+      - Pacific/Port_Moresby
+      - Pacific/Rarotonga
+      - Pacific/Saipan
+      - Pacific/Samoa
+      - Pacific/Tahiti
+      - Pacific/Tarawa
+      - Pacific/Tongatapu
+      - Pacific/Truk
+      - Pacific/Wake
+      - Pacific/Wallis
+      - Pacific/Yap
+      - Poland
+      - Portugal
+      - ROC
+      - ROK
+      - Singapore
+      - Turkey
+      - UCT
+      - US/Alaska
+      - US/Aleutian
+      - US/Arizona
+      - US/Central
+      - US/East-Indiana
+      - US/Eastern
+      - US/Hawaii
+      - US/Indiana-Starke
+      - US/Michigan
+      - US/Mountain
+      - US/Pacific
+      - US/Samoa
+      - UTC
+      - Universal
+      - W-SU
+      - WET
+      - Zulu
+      title: Timezone
+    BatteryCyclePenaltyPerKwh:
+      properties:
+        name:
+          type: string
+          const: cycle_penalty_per_kwh
+          title: Name
+          default: cycle_penalty_per_kwh
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: BatteryCyclePenaltyPerKwh
+      description: 'Penalty on battery throughput, incurred on both charge and discharge.
+
+
+        The default (~0.001) is a sensible choice for most cases — small enough that the
+
+        battery is used freely rather than left idle. Raise it under retail_rate_dispatch
+
+        to model real battery wear and prevent low-return arbitrage (cycles whose bill
+
+        savings don''t justify the wear): there it is a degradation cost in $/kWh of
+
+        throughput, counted on both legs, so ~2x per delivered kWh (~$0.05–0.17/kWh: a
+
+        typical home lithium iron phosphate battery at the low end, a Tesla Powerwall
+
+        warranty at the high end). Under self_consumption it is not a dollar amount and
+
+        barely affects dispatch (the battery stores surplus PV whenever it can).
+
+        peak_shaving ignores it entirely: shaving a per-kW peak is not a per-kWh trade,
+
+        so it uses only a tiny internal floor.'
+    ConsumptionFossilFuelCookingRange:
+      type: number
+      minimum: 0.0
+      title: ConsumptionFossilFuelCookingRange
+    SnowLoss:
+      properties:
+        name:
+          type: string
+          const: snow_loss
+          title: Name
+          default: snow_loss
+        value:
+          type: number
+          title: Value
+          default: 0
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: SnowLoss
+      description: 'Power losses from snow covering the array; combined multiplicatively with other
+
+        DC losses.'
+    Setpoint:
+      anyOf:
+      - $ref: '#/components/schemas/Setpoint1'
+      - $ref: '#/components/schemas/Setpoint2'
+      title: Setpoint
+      description: HVAC Setpoint Temperature or 24-hr Schedule
+    EIAFuelType:
+      type: string
+      enum:
+      - electricity
+      - natural_gas
+      - propane
+      - fuel_oil
+      title: EIAFuelType
+    Value:
+      type: number
+      maximum: 1.0
+      minimum: 0.0
+      title: Value
+    AtticTypeEnum:
+      type: string
+      enum:
+      - Finished Attic or Cathedral Ceilings
+      - Unvented Attic
+      - Vented Attic
+      - None
+      title: AtticTypeEnum
+    Coordinates:
+      properties:
+        latitude:
+          type: number
+          maximum: 90.0
+          minimum: -90.0
+          title: Latitude
+          description: Latitude in decimal degrees
+          examples:
+          - 37.7749
+        longitude:
+          type: number
+          maximum: 180.0
+          minimum: -180.0
+          title: Longitude
+          description: Longitude in decimal degrees
+          examples:
+          - -122.4194
+      type: object
+      required:
+      - latitude
+      - longitude
+      title: Coordinates
+      description: Geographical coordinates for a building's location. An approximation is sufficient.
+    DcToAcRatio:
+      properties:
+        name:
+          type: string
+          const: dc_to_ac_ratio
+          title: Name
+          default: dc_to_ac_ratio
+        value:
+          type: number
+          title: Value
+          default: 1.5
+          gt: 0.0
+          le: 5.0
+      type: object
+      title: DcToAcRatio
+      description: 'PV array DC capacity divided by inverter AC rating; values >1 can increase yield
+
+        but cause clipping at peaks.'
+    ChargePeriod:
+      type: string
+      enum:
+      - annually
+      - quarterly
+      - monthly
+      - daily
+      - hourly
+      title: ChargePeriod
+      description: "The period over which the charge is applied. Its effect depends on rate_type:\n* fixed/pv_capacity: the frequency at which the charge is incurred.\n* energy (imports, exports, consumption, pv_production): the window over which\n  quantity accumulates before applying tiered bands (no effect for single-band).\n* demand: the window over which peak demand is measured and tiered bands applied.\n* minimum: the period over which the minimum bill is evaluated.\n* surcharge/tax: not applicable."
+    CookingRange:
+      properties:
+        name:
+          type: string
+          const: cooking_range
+          title: Name
+          default: cooking_range
+        value:
+          $ref: '#/components/schemas/CookingRangeEnum'
+      type: object
+      required:
+      - value
+      title: CookingRange
+      description: 'Cooking Range Type
+
+        Reference: https://www.energystar.gov/products/electric_cooking_products/key_product_criteria'
+    ThermalDemandCoolingUnmet:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandCoolingUnmet
+    ClimateZoneEnum:
+      type: string
+      enum:
+      - 1A
+      - 2A
+      - 2B
+      - 3A
+      - 3B
+      - 3C
+      - 4A
+      - 4B
+      - 4C
+      - 5A
+      - 5B
+      - 6A
+      - 6B
+      - 7A
+      - 7B
+      title: ClimateZoneEnum
+    ActualProduction:
+      items:
+        $ref: '#/components/schemas/ActualProductionInterval'
+      type: array
+      minItems: 1
+      title: ActualProduction
+      description: List of actual production intervals
+    Orientation:
+      properties:
+        name:
+          type: string
+          const: orientation
+          title: Name
+          default: orientation
+        value:
+          $ref: '#/components/schemas/OrientationEnum'
+      type: object
+      required:
+      - value
+      title: Orientation
+      description: Orientation of the front of the dwelling unit as it faces the street
+    ConsumptionFossilFuelPool:
+      type: number
+      minimum: 0.0
+      title: ConsumptionFossilFuelPool
+    ThermalDemandHeating:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandHeating
+    BatteryCapacity:
+      properties:
+        name:
+          type: string
+          const: capacity
+          title: Name
+          default: capacity
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: BatteryCapacity
+      description: Battery Capacity [AC kWh]
+    HorizontalLocation:
+      properties:
+        name:
+          type: string
+          const: horizontal_location
+          title: Name
+          default: horizontal_location
+        value:
+          $ref: '#/components/schemas/HorizontalLocationEnum'
+      type: object
+      required:
+      - value
+      title: HorizontalLocation
+      description: Horizontal Location in a Single-Family Attached or Multi-Family building
+    CalculateRequest:
+      properties:
+        location:
+          oneOf:
+          - $ref: '#/components/schemas/Coordinates'
+          - $ref: '#/components/schemas/Address'
+          title: Location
+        parameters:
+          $ref: '#/components/schemas/CalculateRequestParameters'
+        consumption:
+          $ref: '#/components/schemas/Consumption'
+          title: Consumption
+        production:
+          $ref: '#/components/schemas/Production'
+          title: Production
+        storage:
+          $ref: '#/components/schemas/Storage'
+          title: Storage
+        costs:
+          $ref: '#/components/schemas/CostsInput'
+          title: Costs
+      type: object
+      required:
+      - location
+      - parameters
+      title: CalculateRequest
+      description: Payload Schema for a Calculate Request with optional address input
+      examples:
+      - consumption:
+          actuals:
+          - from_datetime: '2023-01-01T00:00:00'
+            to_datetime: '2024-01-01T00:00:00'
+            value: 3774
+            variable: consumption.electricity
+          attributes:
+            baseline:
+            - name: building_type
+              value: Single-Family Detached
+            hypothetical:
+            - name: building_type
+              value: Single-Family Detached
+          calibration:
+            apply_residuals: true
+            method: uniform-mean
+            sample_size: 35
+        costs:
+          emission_rates:
+            electricity:
+              units: kgCO2e/kWh
+              value: 0.47045
+            fossil_fuel:
+              units: kgCO2e/kWh
+              value: 0.1872057318321392
+          utility_rates:
+            electricity:
+              units: $/kWh
+              value: 0.29305
+            fossil_fuel:
+              units: $/kWh
+              value: 0.069771
+            pv_buyback:
+              units: $/kWh
+              value: 0.2
+            pv_ppa:
+              units: $/kWh
+              value: 0.26
+        location:
+          latitude: 37.7749
+          longitude: -122.4194
+        parameters:
+          clip_by: inner
+          from_datetime: '2023-01-01T00:00:00'
+          group_by: month
+          interval_format: long
+          to_datetime: '2024-01-01T00:00:00'
+          variables:
+          - consumption.electricity
+        production:
+          actuals:
+          - from_datetime: '2023-01-01T00:00:00'
+            to_datetime: '2024-01-01T00:00:00'
+            value: 7.3
+            variable: production.electricity
+          attributes:
+            baseline:
+            - name: panel_arrays
+              value:
+              - azimuth: 180.0
+                capacity: 10.0
+                tilt: 30.0
+            hypothetical: []
+          calibration:
+            method: uniform-mean
+        storage:
+          attributes:
+            baseline:
+            - name: capacity
+              value: 10
+            - name: power
+              value: 5
+            - name: capacity_recommendation_quantile
+              value: 0.5
+            hypothetical: []
+    BatteryCapacityRecommendationQuantile:
+      properties:
+        name:
+          type: string
+          const: capacity_recommendation_quantile
+          title: Name
+          default: capacity_recommendation_quantile
+        value:
+          $ref: '#/components/schemas/Value'
+      type: object
+      title: BatteryCapacityRecommendationQuantile
+      description: 'Battery Capacity Recommendation Quantile
+
+        Used for automatic sizing. A value of 0.5 will recommend a capacity that meets the 50th percentile of daily load.'
+    NameplateRatingLoss:
+      properties:
+        name:
+          type: string
+          const: nameplate_rating_loss
+          title: Name
+          default: nameplate_rating_loss
+        value:
+          type: number
+          title: Value
+          default: 0.01
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: NameplateRatingLoss
+      description: 'Field measurements of the electrical characteristics of photovoltaic modules
+
+        in the array may show that they differ from their nameplate rating; combined multiplicatively
+
+        with other DC losses.'
+    HVACHeatingSetpoint:
+      properties:
+        name:
+          type: string
+          const: hvac_heating_setpoint
+          title: Name
+          default: hvac_heating_setpoint
+        value:
+          $ref: '#/components/schemas/Setpoint'
+      type: object
+      required:
+      - value
+      title: HVACHeatingSetpoint
+      description: HVAC Heating Setpoint [°C]
+    FloorAreaSourceModel:
+      type: string
+      enum:
+      - regressors from glide API w/ num stories
+      - regressors from glide API w/o num stories
+      - regressors from glide and mapdwell API w/ num stories
+      - regressors from glide and mapdwell API w/o num stories
+      title: FloorAreaSourceModel
+    ClothesWasherEfficiency:
+      properties:
+        name:
+          type: string
+          const: clothes_washer_efficiency
+          title: Name
+          default: clothes_washer_efficiency
+        value:
+          $ref: '#/components/schemas/ClothesWasherEfficiencyEnum'
+      type: object
+      required:
+      - value
+      title: ClothesWasherEfficiency
+      description: Clothes Washer Efficiency
+    IntervalFrequency:
+      type: string
+      enum:
+      - hour
+      - day
+      - month
+      - year
+      - period
+      title: IntervalFrequency
+      description: 'Timestep frequency for interval data.
+
+
+        `PERIOD` collapses the entire requested window into a single bucket — useful
+
+        when you want a single total over a span that may straddle calendar years
+
+        (e.g. a Mar 2024 → Mar 2025 simulation, where `YEAR` would split into two
+
+        awkward partial-year buckets).'
+    Capacity:
+      properties:
+        temperature:
+          type: number
+          maximum: 40.0
+          minimum: -25.0
+          title: Temperature
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - temperature
+      - value
+      title: Capacity
+      description: HVAC Capacity [kBtu/hr] at a specific outdoor dry bulb temperature [°C]
+    ClothesDryerFuel:
+      properties:
+        name:
+          type: string
+          const: clothes_dryer_fuel
+          title: Name
+          default: clothes_dryer_fuel
+        value:
+          $ref: '#/components/schemas/ClothesDryerFuelEnum'
+      type: object
+      required:
+      - value
+      title: ClothesDryerFuel
+      description: Clothes Dryer Fuel
+    EnsembleAggregationMethod:
+      type: string
+      enum:
+      - nearest
+      - average
+      title: EnsembleAggregationMethod
+      description: "Method for aggregating a building ensemble.\n- 'nearest' elects a single building from the ensemble. When actuals are provided,\n  it selects the building with the lowest calibration error (MSE) relative to those actuals.\n  When actuals are not provided, it selects the building closest to the median total\n  energy consumption (electricity + fossil fuel) across the ensemble, using MSE as the\n  distance metric.\n- 'average' calculates a weighted average of all buildings in the ensemble. When actuals are\n  provided, buildings are weighted based on calibration error (lower error = higher weight).\n  When no actuals are provided, this is a simple unweighted average. Note that when using this\n  method, ``floor_area`` is averaged across buildings even when their values differ, whereas\n  other building attributes are only returned when they are common (equal) across all buildings\n  in the ensemble. Future releases may provide distributional information for varying attributes."
+    EIAUtilityElectricRateMeta:
+      properties:
+        type:
+          type: string
+          const: eia_utility_electric_flat_rate
+          title: Type
+          default: eia_utility_electric_flat_rate
+        eia_id:
+          type: integer
+          title: Eia Id
+        rate_class:
+          $ref: '#/components/schemas/UtilityRateClass'
+          title: Rate Class
+          default: residential
+        utility_name:
+          type: string
+          title: Utility Name
+        ownership:
+          type: string
+          title: Ownership
+      type: object
+      required:
+      - eia_id
+      - utility_name
+      title: EIAUtilityElectricRateMeta
+      description: 'Average electricity rate for a specific utility.
+
+        Electricity rates are sourced from EIA
+
+        source: https://www.eia.gov/electricity/data/eia861/'
+    ConsumptionElectricityClothesWasher:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityClothesWasher
+    WallExteriorFinishEnum:
+      type: string
+      enum:
+      - None
+      - Aluminum
+      - Brick, Light
+      - Brick, Dark
+      - Fiber-Cement
+      - Shingle, Asbestos
+      - Shingle, Composition
+      - Stucco, Light
+      - Stucco, Dark
+      - Vinyl
+      - Wood
+      title: WallExteriorFinishEnum
+    WallTypeEnum:
+      type: string
+      enum:
+      - Brick
+      - Concrete
+      - Steel Frame
+      - Wood Frame
+      title: WallTypeEnum
+    ProductionScenarios:
+      properties:
+        baseline:
+          $ref: '#/components/schemas/ProductionAttributesList'
+          title: Baseline
+        hypothetical:
+          $ref: '#/components/schemas/ProductionAttributesList'
+          title: Hypothetical
+      type: object
+      title: ProductionScenarios
+      description: 'Payload Schema for Production Scenarios
+
+        - ''baseline'' specifies any known and existing production attributes that are used for calibration.
+
+        - ''hypothetical'' specifies any production attributes that should be "upgraded" in a what-if scenario.'
+    HotTubEnum:
+      type: string
+      enum:
+      - None
+      - Gas
+      - Electric
+      title: HotTubEnum
+    HVACHeatingEfficiency:
+      properties:
+        name:
+          type: string
+          const: hvac_heating_efficiency
+          title: Name
+          default: hvac_heating_efficiency
+        value:
+          $ref: '#/components/schemas/COPEfficiencyCurve'
+      type: object
+      required:
+      - value
+      title: HVACHeatingEfficiency
+      description: 'HVAC Heating Efficiency as COP (Coefficient of Performance)
+
+        COP = Energy Delivered / Energy Consumed'
+    RoofMaterialEnum:
+      type: string
+      enum:
+      - Asphalt Shingles, Medium
+      - Composition Shingles
+      - Metal, Dark
+      - Slate
+      - Tile, Clay or Ceramic
+      - Tile, Concrete
+      - Wood Shingles
+      title: RoofMaterialEnum
+    WaterHeaterOutletTemperature:
+      properties:
+        name:
+          type: string
+          const: water_heater_outlet_temperature
+          title: Name
+          default: water_heater_outlet_temperature
+        value:
+          type: number
+          maximum: 70.0
+          minimum: 40.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: WaterHeaterOutletTemperature
+      description: Water Heater Temperature [°C]
+    ConsumptionFossilFuelHotTub:
+      type: number
+      minimum: 0.0
+      title: ConsumptionFossilFuelHotTub
+    FossilFuelEmissionRateMeta:
+      properties:
+        type:
+          type: string
+          const: fossil_fuel_emission_rate
+          title: Type
+          default: fossil_fuel_emission_rate
+        fuel:
+          $ref: '#/components/schemas/FossilFuelType'
+        source:
+          type: string
+          title: Source
+      type: object
+      required:
+      - fuel
+      - source
+      title: FossilFuelEmissionRateMeta
+    HVACCooling:
+      properties:
+        name:
+          type: string
+          const: hvac_cooling
+          title: Name
+          default: hvac_cooling
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACCooling
+      description: HVAC Cooling is used
+    WaterFixturesUsage:
+      properties:
+        name:
+          type: string
+          const: water_fixtures_usage
+          title: Name
+          default: water_fixtures_usage
+        value:
+          type: number
+          maximum: 4.0
+          minimum: 0.1
+          title: Value
+      type: object
+      required:
+      - value
+      title: WaterFixturesUsage
+      description: Water fixtures usage as a fraction of the national average
+    UtilityFlatRateInput:
+      properties:
+        type:
+          type: string
+          const: flat_rate
+          title: Type
+          default: flat_rate
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+        units:
+          type: string
+          const: $/kWh
+          title: Units
+          default: $/kWh
+      type: object
+      required:
+      - value
+      title: UtilityFlatRateInput
+    EmissionsElectricity:
+      type: number
+      minimum: 0.0
+      title: EmissionsElectricity
+    NumStories:
+      properties:
+        name:
+          type: string
+          const: num_stories
+          title: Name
+          default: num_stories
+        value:
+          type: integer
+          maximum: 35.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: NumStories
+      description: Number of stories
+    TariffMeta:
+      properties:
+        source:
+          type: string
+          enum:
+          - user
+          title: Source
+        id:
+          type: integer
+          title: Id
+      type: object
+      required:
+      - source
+      title: TariffMeta
+    WaterHeaterEnum:
+      type: string
+      enum:
+      - Fossil Fuel Standard
+      - Fossil Fuel Premium
+      - Fossil Fuel Tankless
+      - Electric Standard
+      - Electric Premium
+      - Electric Tankless
+      - Electric Heat Pump
+      title: WaterHeaterEnum
+    ConsumptionElectricityClothesDryer:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityClothesDryer
+    PanelArray:
+      properties:
+        tilt:
+          type: number
+          title: Tilt
+          description: Tilt of the panel array in degrees
+          default: 20.0
+          ge: 0.0
+          le: 90.0
+        azimuth:
+          type: number
+          title: Azimuth
+          description: Azimuth of the panel array in degrees
+          default: 180.0
+          ge: 0.0
+          le: 360.0
+        capacity:
+          type: number
+          minimum: 0.0
+          title: Capacity
+          description: Capacity of the panel array in kW
+      type: object
+      required:
+      - capacity
+      title: PanelArray
+      description: Panel Array Configuration
+    BuildingTypeSource:
+      type: string
+      enum:
+      - regrid
+      - resstock
+      title: BuildingTypeSource
+    Costs:
+      properties:
+        utility_rates:
+          $ref: '#/components/schemas/UtilityRates'
+        emission_rates:
+          $ref: '#/components/schemas/EmissionRates'
+        fossil_fuel_type:
+          $ref: '#/components/schemas/FossilFuelType'
+          title: Fossil Fuel Type
+          description: Fossil fuel type for non-electric utility rates. If not specified, the modal fossil fuel type for the location will be used.
+      type: object
+      required:
+      - utility_rates
+      - emission_rates
+      title: Costs
+    EGRIDEmissionRateMeta:
+      properties:
+        type:
+          type: string
+          const: egrid_electric_emission_rate
+          title: Type
+          default: egrid_electric_emission_rate
+        subregion_name:
+          type: string
+          title: Subregion Name
+      type: object
+      required:
+      - subregion_name
+      title: EGRIDEmissionRateMeta
+      description: 'Energy emission intensity information
+
+        source: https://www.epa.gov/egrid'
+    HVACCoolingDucts:
+      properties:
+        name:
+          type: string
+          const: hvac_cooling_ducts
+          title: Name
+          default: hvac_cooling_ducts
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACCoolingDucts
+      description: HVAC Ducts are used for Cooling
+    PoolEnum:
+      type: string
+      enum:
+      - None
+      - Gas
+      - Electric
+      - Solar
+      title: PoolEnum
+    StorageAttributesList:
+      items:
+        $ref: '#/components/schemas/StorageAttributesList1'
+      type: array
+      title: StorageAttributesList
+      description: Payload Schema for Storage Attributes
+    WindowPanesEnum:
+      type: string
+      enum:
+      - Single
+      - Double
+      - Triple
+      title: WindowPanesEnum
+    Consumption1:
+      type: number
+      minimum: 0.0
+      title: Consumption1
+    StorageScenarios:
+      properties:
+        baseline:
+          $ref: '#/components/schemas/StorageAttributesList'
+          title: Baseline
+        hypothetical:
+          $ref: '#/components/schemas/StorageAttributesList'
+          title: Hypothetical
+      type: object
+      title: StorageScenarios
+      description: 'Payload Schema for Storage Scenarios
+
+        - ''baseline'' specifies any known and existing storage attributes that are used for calibration.
+
+        - ''hypothetical'' specifies any storage attributes that should be "upgraded" in a what-if scenario.'
+    ConsumptionScenarios:
+      properties:
+        baseline:
+          $ref: '#/components/schemas/ConsumptionAttributesList'
+          title: Baseline
+        hypothetical:
+          $ref: '#/components/schemas/ConsumptionAttributesList'
+          title: Hypothetical
+      type: object
+      title: ConsumptionScenarios
+      description: 'Payload Schema for Consumption Scenarios
+
+        - ''baseline'' specifies any known and existing building attributes that are used for calibration.
+
+        - ''hypothetical'' specifies any building attributes that should be "upgraded" in a what-if scenario.'
+    BuildingLocation:
+      properties:
+        puma_fips:
+          type: string
+          title: Puma Fips
+        county:
+          type: string
+          title: County
+        county_fips:
+          type: string
+          title: County Fips
+        state:
+          type: string
+          title: State
+        state_fips:
+          type: string
+          title: State Fips
+        climate_zone:
+          $ref: '#/components/schemas/ClimateZoneEnum'
+        latitude:
+          type: number
+          title: Latitude
+        longitude:
+          type: number
+          title: Longitude
+        timezone:
+          $ref: '#/components/schemas/Timezone'
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+          examples:
+          - 123 Main St, San Francisco, CA 94105
+      type: object
+      required:
+      - puma_fips
+      - county
+      - county_fips
+      - state
+      - state_fips
+      - climate_zone
+      - latitude
+      - longitude
+      - timezone
+      title: BuildingLocation
+    NetMeteringPolicyType:
+      type: string
+      enum:
+      - 1-to-1 Net Metering
+      - Monthly Net Metering
+      - Export Credit
+      - Buy All Sell All
+      title: NetMeteringPolicyType
+      description: General policy descriptor. Reference individual rate types for more specific application details.
+    LongInterval:
+      properties:
+        from_datetime:
+          type: string
+          format: date-time
+          title: From Datetime
+        to_datetime:
+          type: string
+          format: date-time
+          title: To Datetime
+        variable:
+          $ref: '#/components/schemas/VariableModel'
+        value:
+          type: number
+          title: Value
+      type: object
+      required:
+      - from_datetime
+      - to_datetime
+      - variable
+      - value
+      title: LongInterval
+    Consumption:
+      properties:
+        attributes:
+          $ref: '#/components/schemas/ConsumptionScenarios'
+          title: Attributes
+        actuals:
+          $ref: '#/components/schemas/ActualConsumption'
+          title: Actuals
+          description: 'Metered consumption intervals used to calibrate the simulated building load. Accepts kWh consumption variables (''consumption.electricity'', ''consumption.fossil_fuel'') or cost variables (''costs.electricity'', ''costs.fossil_fuel''). Cost variables are converted to equivalent kWh using the configured utility rates before calibration. Note: when cost variables are combined with battery storage, the cost-to-kWh conversion does not account for battery charging/discharging effects on grid interactions.'
+        calibration:
+          $ref: '#/components/schemas/ConsumptionCalibration'
+          title: Calibration
+      type: object
+      title: Consumption
+      description: Payload Schema for consumption data
+    EmissionRatesInput:
+      properties:
+        electricity:
+          $ref: '#/components/schemas/EmissionRateInput'
+          title: Electricity
+        fossil_fuel:
+          $ref: '#/components/schemas/EmissionRateInput'
+          title: Fossil Fuel
+      type: object
+      title: EmissionRatesInput
+      description: Energy emission intensity information
+    HVACCoolingPartialSpaceConditioning:
+      properties:
+        name:
+          type: string
+          const: hvac_cooling_partial_space_conditioning
+          title: Name
+          default: hvac_cooling_partial_space_conditioning
+        value:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACCoolingPartialSpaceConditioning
+      description: 'HVAC Cooling Partial Space Conditioning as a fraction of the total floor area
+
+        Ignored when hvac_cooling is False'
+    RefrigeratorExtraEfficiency:
+      properties:
+        name:
+          type: string
+          const: refrigerator_extra_efficiency
+          title: Name
+          default: refrigerator_extra_efficiency
+        value:
+          type: number
+          maximum: 1360.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: RefrigeratorExtraEfficiency
+      description: 'Extra Refrigerator Rated Annual Energy Consumption [kWh]
+
+        - EnergyStar: 400 kWh/year
+
+        Reference: https://www.energystar.gov/products/refrigerators/key_product_criteria'
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HVACSecondaryHeatingCapacity:
+      properties:
+        name:
+          type: string
+          const: hvac_secondary_heating_capacity
+          title: Name
+          default: hvac_secondary_heating_capacity
+        value:
+          $ref: '#/components/schemas/Value1'
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACSecondaryHeatingCapacity
+      description: 'HVAC Secondary Heating Capacity [kBtu/hr]
+
+        Ignored when hvac_heat_pump is False'
+    GridFossilFuelImport:
+      type: number
+      minimum: 0.0
+      title: GridFossilFuelImport
+    WaterHeater:
+      properties:
+        name:
+          type: string
+          const: water_heater
+          title: Name
+          default: water_heater
+        value:
+          $ref: '#/components/schemas/WaterHeaterEnum'
+      type: object
+      required:
+      - value
+      title: WaterHeater
+      description: Water Heater Efficiency
+    ConsumptionFossilFuel:
+      type: number
+      minimum: 0.0
+      title: ConsumptionFossilFuel
+    Storage:
+      properties:
+        attributes:
+          $ref: '#/components/schemas/StorageScenarios'
+          title: Attributes
+      type: object
+      title: Storage
+      description: Payload Schema for a Storage data
+    ProductionAttributesList:
+      items:
+        $ref: '#/components/schemas/ProductionAttributesList1'
+      type: array
+      title: ProductionAttributesList
+      description: Payload Schema for Production Attributes
+    ClothesWasherEfficiencyEnum:
+      type: string
+      enum:
+      - None
+      - Standard
+      - EnergyStar
+      title: ClothesWasherEfficiencyEnum
+    HVACHeatPump:
+      properties:
+        name:
+          type: string
+          const: hvac_heat_pump
+          title: Name
+          default: hvac_heat_pump
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACHeatPump
+      description: 'HVAC Heat Pump is used
+
+        Only active when hvac_heating_efficiency exceeds hvac_secondary_heating_efficiency'
+    PowerTempCoefficient:
+      properties:
+        name:
+          type: string
+          const: power_temp_coefficient
+          title: Name
+          default: power_temp_coefficient
+        value:
+          type: number
+          title: Value
+          default: -0.0047
+          gt: -0.1
+          lt: 0.0
+      type: object
+      title: PowerTempCoefficient
+      description: 'Multiplicative rate of change coefficient (1/°C) at which a PV module loses
+
+        efficiency for each degree above 25 °C (typically negative).'
+    AtticType:
+      properties:
+        name:
+          type: string
+          const: attic_type
+          title: Name
+          default: attic_type
+        value:
+          $ref: '#/components/schemas/AtticTypeEnum'
+      type: object
+      required:
+      - value
+      title: AtticType
+      description: Attic Type
+    StorageAttributesList1:
+      oneOf:
+      - $ref: '#/components/schemas/BatteryCapacity'
+      - $ref: '#/components/schemas/BatteryPower'
+      - $ref: '#/components/schemas/BatteryCapacityRecommendationQuantile'
+      - $ref: '#/components/schemas/BatteryDispatchStrategy'
+      - $ref: '#/components/schemas/BatteryCyclePenaltyPerKwh'
+      title: StorageAttributesList1
+      discriminator:
+        propertyName: name
+        mapping:
+          capacity: '#/components/schemas/BatteryCapacity'
+          capacity_recommendation_quantile: '#/components/schemas/BatteryCapacityRecommendationQuantile'
+          cycle_penalty_per_kwh: '#/components/schemas/BatteryCyclePenaltyPerKwh'
+          dispatch_strategy: '#/components/schemas/BatteryDispatchStrategy'
+          power: '#/components/schemas/BatteryPower'
+    NumOccupants:
+      properties:
+        name:
+          type: string
+          const: num_occupants
+          title: Name
+          default: num_occupants
+        value:
+          type: integer
+          maximum: 10.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: NumOccupants
+      description: Number of building occupants
+    InverterEfficiency:
+      properties:
+        name:
+          type: string
+          const: inverter_efficiency
+          title: Name
+          default: inverter_efficiency
+        value:
+          type: number
+          title: Value
+          default: 0.97
+          gt: 0.0
+          le: 1.0
+      type: object
+      title: InverterEfficiency
+      description: 'Ratio of AC output to DC input under nominal conditions; unitless fraction
+
+        indicating conversion efficiency (<1).'
+    RimJoistInsulation:
+      properties:
+        name:
+          type: string
+          const: rim_joist_insulation
+          title: Name
+          default: rim_joist_insulation
+        value:
+          type: integer
+          maximum: 15.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: RimJoistInsulation
+      description: 'R-Value of Rim Joist Insulation
+
+        Ignored when Foundation Type is Ambient or Slab
+
+        Set to 1 for Uninsulated'
+    PlugLoads:
+      properties:
+        name:
+          type: string
+          const: plug_loads
+          title: Name
+          default: plug_loads
+        value:
+          type: number
+          maximum: 1.66
+          minimum: 0.78
+          title: Value
+      type: object
+      required:
+      - value
+      title: PlugLoads
+      description: Plug Loads usage as a fraction of the national average
+    ConsumptionElectricityHeating:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityHeating
+    ConsumptionFossilFuelClothesDryer:
+      type: number
+      minimum: 0.0
+      title: ConsumptionFossilFuelClothesDryer
+    ConsumptionElectricityCooling:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityCooling
+    ConsumptionAttributesList:
+      items:
+        $ref: '#/components/schemas/ConsumptionAttributesList1'
+      type: array
+      title: ConsumptionAttributesList
+    UtilityRateClass:
+      type: string
+      enum:
+      - residential
+      - commercial
+      - industrial
+      title: UtilityRateClass
+      description: Utility rate class for energy consumption
+    ThermalDemandHeatingDelivered:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandHeatingDelivered
+    FoundationWallInsulation:
+      properties:
+        name:
+          type: string
+          const: foundation_wall_insulation
+          title: Name
+          default: foundation_wall_insulation
+        value:
+          type: integer
+          maximum: 15.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: FoundationWallInsulation
+      description: 'R-Value of Foundation Wall Insulation
+
+        Ignored when Foundation Type is Ambient or Slab
+
+        Set to 1 for Uninsulated'
+    GridElectricityImport:
+      type: number
+      minimum: 0.0
+      title: GridElectricityImport
+    FoundationType:
+      properties:
+        name:
+          type: string
+          const: foundation_type
+          title: Name
+          default: foundation_type
+        value:
+          $ref: '#/components/schemas/FoundationTypeEnum'
+      type: object
+      required:
+      - value
+      title: FoundationType
+      description: Foundation Type
+    HVACCoolingSetpoint:
+      properties:
+        name:
+          type: string
+          const: hvac_cooling_setpoint
+          title: Name
+          default: hvac_cooling_setpoint
+        value:
+          $ref: '#/components/schemas/Setpoint'
+      type: object
+      required:
+      - value
+      title: HVACCoolingSetpoint
+      description: HVAC Cooling Setpoint [°C]
+    ProductionElectricity:
+      type: number
+      minimum: 0.0
+      title: ProductionElectricity
+    ProductionElectricityUtilized:
+      type: number
+      minimum: 0.0
+      title: ProductionElectricityUtilized
+    HVACCoolingEfficiency:
+      properties:
+        name:
+          type: string
+          const: hvac_cooling_efficiency
+          title: Name
+          default: hvac_cooling_efficiency
+        value:
+          $ref: '#/components/schemas/COPEfficiencyCurve'
+      type: object
+      required:
+      - value
+      title: HVACCoolingEfficiency
+      description: 'HVAC Cooling Efficiency as COP (Coefficient of Performance)
+
+        COP = Energy Delivered / Energy Consumed
+
+        Ignored when hvac_cooling is False'
+    SoilingLoss:
+      properties:
+        name:
+          type: string
+          const: soiling_loss
+          title: Name
+          default: soiling_loss
+        value:
+          type: number
+          title: Value
+          default: 0.02
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: SoilingLoss
+      description: 'Power losses from dirt or debris blocking sunlight; location- and weather-dependent;
+
+        combined multiplicatively with other DC losses.'
+    EVChargingEfficiency:
+      properties:
+        name:
+          type: string
+          const: ev_charging_efficiency
+          title: Name
+          default: ev_charging_efficiency
+        value:
+          type: number
+          maximum: 1.0
+          minimum: 0.6
+          title: Value
+      type: object
+      required:
+      - value
+      title: EVChargingEfficiency
+      description: 'EV Charger Efficiency as a fraction of the total energy consumed
+
+        Ignored when ev_charging is False'
+    RoofMaterial:
+      properties:
+        name:
+          type: string
+          const: roof_material
+          title: Name
+          default: roof_material
+        value:
+          $ref: '#/components/schemas/RoofMaterialEnum'
+      type: object
+      required:
+      - value
+      title: RoofMaterial
+      description: Roof Material
+    CalculateRequestParameters:
+      properties:
+        from_datetime:
+          type: string
+          format: date-time
+          title: From Datetime
+          description: 'Start of the requested interval range (inclusive). Interpreted as local wall-clock time at the building''s location. Accepts either a naive datetime (e.g. ''2024-01-01T00:00:00'', already in local time) or a timezone-aware datetime (e.g. ''2024-01-01T05:00:00Z'', ''2024-01-01T00:00:00-05:00''); tz-aware values are converted to local time using the building''s resolved IANA timezone. Should be hour-aligned: /v2/calculate floors sub-hour precision and emits a warning; /v2/cost rejects sub-hour values.'
+          examples:
+          - '2019-01-01T00:00:00'
+        to_datetime:
+          type: string
+          format: date-time
+          title: To Datetime
+          description: 'End of the requested interval range (exclusive). Interpreted as local wall-clock time at the building''s location. Accepts either a naive datetime (e.g. ''2024-01-01T00:00:00'', already in local time) or a timezone-aware datetime (e.g. ''2024-01-01T05:00:00Z'', ''2024-01-01T00:00:00-05:00''); tz-aware values are converted to local time using the building''s resolved IANA timezone. Should be hour-aligned: /v2/calculate floors sub-hour precision and emits a warning; /v2/cost rejects sub-hour values.'
+          examples:
+          - '2020-01-01T00:00:00'
+        interval_format:
+          $ref: '#/components/schemas/IntervalFormat'
+          title: Interval Format
+          default: long
+        group_by:
+          $ref: '#/components/schemas/IntervalFrequency'
+          title: Group By
+          default: year
+        clip_by:
+          $ref: '#/components/schemas/ClipBy'
+          title: Clip By
+          default: inner
+        variables:
+          anyOf:
+          - type: string
+            const: all
+          - type: string
+            const: all_non_zero
+          - items:
+              $ref: '#/components/schemas/VariableModel'
+            type: array
+          title: Variables
+          description: 'Variables to include in the response intervals. Pass a list of `Variable` values to select specific series, `''all''` to return every variable, or `''all_non_zero''` to drop variables that are zero across every interval. Note: `costs.electricity.*` component variables are experimental and subject to change.'
+        use_actual_weather:
+          type: boolean
+          title: Use Actual Weather
+          description: 'Use actual historical (and forecast for future periods) weather to more accurately estimate energy production and consumption. NOTE: Using actual weather incurs additional per-request charges.'
+          default: false
+      type: object
+      required:
+      - from_datetime
+      - to_datetime
+      - variables
+      title: CalculateRequestParameters
+      description: Parameters for a Calculate Response
+    GroundThermalConductivity:
+      properties:
+        name:
+          type: string
+          const: ground_thermal_conductivity
+          title: Name
+          default: ground_thermal_conductivity
+        value:
+          type: number
+          maximum: 3.0
+          minimum: 0.5
+          title: Value
+      type: object
+      required:
+      - value
+      title: GroundThermalConductivity
+      description: Ground Thermal Conductivity [Btu/hr-ft-F]
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    Setpoint2:
+      items:
+        $ref: '#/components/schemas/Setpoint2Item'
+      type: array
+      maxItems: 24
+      minItems: 24
+      title: Setpoint2
+      description: HVAC Setpoint Temperature or 24-hr Schedule
+    LightInducedDegradationLoss:
+      properties:
+        name:
+          type: string
+          const: light_induced_degradation_loss
+          title: Name
+          default: light_induced_degradation_loss
+        value:
+          type: number
+          title: Value
+          default: 0.015
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: LightInducedDegradationLoss
+      description: 'Effect of the reduction in the array''s power during operation caused by light-induced
+
+        degradation of photovoltaic cells; combined multiplicatively with other DC losses.'
+    BuildingTypeEnum:
+      type: string
+      enum:
+      - Single-Family Detached
+      - Single-Family Attached
+      - Multi-Family (2 units)
+      - Multi-Family (3 or 4 units)
+      - Multi-Family (5 to 9 units)
+      - Multi-Family (10 to 19 units)
+      - Multi-Family (20 to 49 units)
+      - Multi-Family (50 or more units)
+      - Mobile Home
+      title: BuildingTypeEnum
+    Address:
+      properties:
+        address:
+          type: string
+          title: Address
+          examples:
+          - 123 Main St, San Francisco, CA 94105
+      type: object
+      required:
+      - address
+      title: Address
+      description: Location specified by address, which will be geocoded to coordinates
+    EVChargingStrategy:
+      properties:
+        name:
+          type: string
+          const: ev_charging_strategy
+          title: Name
+          default: ev_charging_strategy
+        value:
+          $ref: '#/components/schemas/EVChargingStrategyEnum'
+      type: object
+      required:
+      - value
+      title: EVChargingStrategy
+      description: 'EV Charging Strategy (at home)
+
+        - ''immediate_fast'': Immediate as fast as possible upon arrival
+
+        - ''immediate_slow'': Immediate as slow as possible upon arrival (even spread)
+
+        - ''delayed_by_departure'': Delayed to finish by departure time
+
+        - ''delayed_at_midnight'': Delayed to start at midnight
+
+        Ignored when ev_charging is False'
+    Meta:
+      properties:
+        parameters:
+          $ref: '#/components/schemas/CalculateRequestParameters'
+        units:
+          $ref: '#/components/schemas/Units'
+        warnings:
+          items:
+            type: string
+          type: array
+          title: Warnings
+        sources:
+          $ref: '#/components/schemas/DataSourcesMeta'
+      type: object
+      required:
+      - parameters
+      - units
+      - sources
+      title: Meta
+      description: Meta data for a Calculate Response
+    MismatchLoss:
+      properties:
+        name:
+          type: string
+          const: mismatch_loss
+          title: Name
+          default: mismatch_loss
+        value:
+          type: number
+          title: Value
+          default: 0.02
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: MismatchLoss
+      description: 'Power losses from electrical differences between PV modules; combined multiplicatively
+
+        with other DC losses.'
+    EmissionRate:
+      properties:
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+        units:
+          type: string
+          const: kgCO2e/kWh
+          title: Units
+          default: kgCO2e/kWh
+        meta:
+          anyOf:
+          - $ref: '#/components/schemas/EGRIDEmissionRateMeta'
+          - $ref: '#/components/schemas/FossilFuelEmissionRateMeta'
+          title: Meta
+          description: Metadata about the data source.
+      type: object
+      required:
+      - value
+      title: EmissionRate
+    ThermalDemandCoolingLatent:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandCoolingLatent
+    VariableModel:
+      type: string
+      enum:
+      - consumption
+      - consumption.electricity
+      - consumption.electricity.refrigerator
+      - consumption.electricity.cooking_range
+      - consumption.electricity.dishwasher
+      - consumption.electricity.clothes_washer
+      - consumption.electricity.clothes_dryer
+      - consumption.electricity.hot_water
+      - consumption.electricity.lighting
+      - consumption.electricity.ceiling_fan
+      - consumption.electricity.plug_loads
+      - consumption.electricity.ev
+      - consumption.electricity.pool
+      - consumption.electricity.hot_tub
+      - consumption.electricity.heating
+      - consumption.electricity.cooling
+      - consumption.electricity.duct_fan
+      - consumption.fossil_fuel
+      - consumption.fossil_fuel.cooking_range
+      - consumption.fossil_fuel.clothes_dryer
+      - consumption.fossil_fuel.hot_water
+      - consumption.fossil_fuel.pool
+      - consumption.fossil_fuel.hot_tub
+      - consumption.fossil_fuel.heating
+      - consumption.electricity.residual
+      - consumption.fossil_fuel.residual
+      - thermal_demand.heating
+      - thermal_demand.heating.unutilized
+      - thermal_demand.heating.delivered
+      - thermal_demand.heating.unmet
+      - thermal_demand.cooling
+      - thermal_demand.cooling.unutilized
+      - thermal_demand.cooling.delivered
+      - thermal_demand.cooling.unmet
+      - thermal_demand.cooling.sensible
+      - thermal_demand.cooling.latent
+      - production.electricity
+      - production.electricity.utilized
+      - production.electricity.curtailed
+      - storage.electricity.charge
+      - storage.electricity.discharge
+      - storage.electricity.state_of_charge
+      - grid.electricity.import
+      - grid.electricity.export
+      - grid.fossil_fuel.import
+      - costs
+      - costs.electricity
+      - costs.electricity.imports
+      - costs.electricity.exports
+      - costs.electricity.fixed
+      - costs.electricity.demand
+      - costs.electricity.pv_capacity
+      - costs.electricity.pv_production
+      - costs.electricity.surcharges
+      - costs.electricity.minimum_adjustments
+      - costs.electricity.consumption
+      - costs.electricity.taxes
+      - costs.fossil_fuel
+      - emissions
+      - emissions.electricity
+      - emissions.fossil_fuel
+      - weather.air_temperature
+      - weather.relative_humidity
+      - weather.wind_speed
+      - weather.ghi
+      - weather.dni
+      - weather.dhi
+      title: VariableModel
+      description: 'Variables available for interval data.
+
+
+        Note: `costs.electricity.*` component variables are experimental and subject to change.
+
+
+        `costs.electricity.minimum_adjustments` is the per-period top-up applied to satisfy
+
+        a tariff''s minimum-bill floor. Non-bypassable charges (fixed customer fees, demand
+
+        charges, and PV-capacity charges) count toward satisfying the minimum: the
+
+        adjustment is the gap between the minimum and the larger of (a) the period''s
+
+        actual bill or (b) the period''s non-bypassable charges. Net-export credits below
+
+        the non-bypassable floor are preserved in the imports/exports components rather
+
+        than being absorbed by the adjustment, so excess credits roll forward.'
+    DispatchStrategy:
+      type: string
+      enum:
+      - peak_shaving
+      - retail_rate_dispatch
+      - self_consumption
+      title: DispatchStrategy
+      description: "Dispatch Strategy for battery.\n- `RETAIL_RATE_DISPATCH` — minimize net electricity cost (pure arbitrage).\n- `SELF_CONSUMPTION` — minimize grid import: store surplus PV and discharge\n  it to cover later load, so as much load as possible is served on-site.\n  Price-agnostic; the battery charges only from PV surplus (no grid-sourced\n  charging), and surplus that won't fit still exports.\n- `PEAK_SHAVING` — minimize the peak kW drawn from the grid (per billing\n  period). Price-free: the battery charges, from PV or grid, to shave each\n  period's peak draw rather than to arbitrage."
+    HorizontalLocationEnum:
+      type: string
+      enum:
+      - Left
+      - Middle
+      - Right
+      - None
+      title: HorizontalLocationEnum
+    Units:
+      properties:
+        thermal_demand:
+          type: string
+          const: kBtu
+          title: Thermal Demand
+          default: kBtu
+        consumption:
+          type: string
+          const: kWh
+          title: Consumption
+          default: kWh
+        production:
+          type: string
+          const: kWh
+          title: Production
+          default: kWh
+        storage:
+          type: string
+          const: kWh
+          title: Storage
+          default: kWh
+        grid:
+          type: string
+          const: kWh
+          title: Grid
+          default: kWh
+        emissions:
+          type: string
+          const: kgCO2e
+          title: Emissions
+          default: kgCO2e
+        costs:
+          type: string
+          const: $
+          title: Costs
+          default: $
+        air_temperature:
+          type: string
+          const: °C
+          title: Air Temperature
+          default: °C
+        relative_humidity:
+          type: string
+          const: '%'
+          title: Relative Humidity
+          default: '%'
+        wind_speed:
+          type: string
+          const: m/s
+          title: Wind Speed
+          default: m/s
+        ghi:
+          type: string
+          const: kWh/m²
+          title: Ghi
+          default: kWh/m²
+        dni:
+          type: string
+          const: kWh/m²
+          title: Dni
+          default: kWh/m²
+        dhi:
+          type: string
+          const: kWh/m²
+          title: Dhi
+          default: kWh/m²
+      type: object
+      title: Units
+    ActualConsumptionInterval:
+      properties:
+        from_datetime:
+          type: string
+          format: date-time
+          title: From Datetime
+        to_datetime:
+          type: string
+          format: date-time
+          title: To Datetime
+        variable:
+          $ref: '#/components/schemas/Variable'
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - from_datetime
+      - to_datetime
+      - variable
+      - value
+      title: ActualConsumptionInterval
+      description: Interval for actual known consumption data
+    ThermalDemandCooling:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandCooling
+    FossilFuelType:
+      type: string
+      enum:
+      - natural_gas
+      - propane
+      - fuel_oil
+      title: FossilFuelType
+      description: Fossil fuel types for energy consumption
+    ConsumptionAttributesList1:
+      oneOf:
+      - $ref: '#/components/schemas/BuildingType'
+      - $ref: '#/components/schemas/Vintage'
+      - $ref: '#/components/schemas/FloorArea'
+      - $ref: '#/components/schemas/Garage'
+      - $ref: '#/components/schemas/NumBedrooms'
+      - $ref: '#/components/schemas/NumOccupants'
+      - $ref: '#/components/schemas/NumStories'
+      - $ref: '#/components/schemas/HorizontalLocation'
+      - $ref: '#/components/schemas/VerticalLocation'
+      - $ref: '#/components/schemas/Orientation'
+      - $ref: '#/components/schemas/NeighborsDistance'
+      - $ref: '#/components/schemas/Lighting'
+      - $ref: '#/components/schemas/RefrigeratorEfficiency'
+      - $ref: '#/components/schemas/RefrigeratorExtraEfficiency'
+      - $ref: '#/components/schemas/FreezerExtraEfficiency'
+      - $ref: '#/components/schemas/DishwasherEfficiency'
+      - $ref: '#/components/schemas/ClothesWasherEfficiency'
+      - $ref: '#/components/schemas/ClothesDryerEfficiency'
+      - $ref: '#/components/schemas/ClothesDryerFuel'
+      - $ref: '#/components/schemas/CookingRange'
+      - $ref: '#/components/schemas/CeilingFan'
+      - $ref: '#/components/schemas/PlugLoads'
+      - $ref: '#/components/schemas/UsageLevel'
+      - $ref: '#/components/schemas/WaterFixturesUsage'
+      - $ref: '#/components/schemas/WaterHeater'
+      - $ref: '#/components/schemas/WaterHeaterOutletTemperature'
+      - $ref: '#/components/schemas/ClothesWasherHotWaterUsage'
+      - $ref: '#/components/schemas/HVACHeatPump'
+      - $ref: '#/components/schemas/HVACHeatingFuel'
+      - $ref: '#/components/schemas/HVACHeatingEfficiency'
+      - $ref: '#/components/schemas/HVACHeatingCapacity'
+      - $ref: '#/components/schemas/HVACSecondaryHeatingFuel'
+      - $ref: '#/components/schemas/HVACSecondaryHeatingEfficiency'
+      - $ref: '#/components/schemas/HVACSecondaryHeatingCapacity'
+      - $ref: '#/components/schemas/HVACCooling'
+      - $ref: '#/components/schemas/HVACCoolingEfficiency'
+      - $ref: '#/components/schemas/HVACCoolingCapacity'
+      - $ref: '#/components/schemas/HVACCoolingPartialSpaceConditioning'
+      - $ref: '#/components/schemas/HVACHeatingSetpoint'
+      - $ref: '#/components/schemas/HVACCoolingSetpoint'
+      - $ref: '#/components/schemas/HVACHeatingDucts'
+      - $ref: '#/components/schemas/HVACCoolingDucts'
+      - $ref: '#/components/schemas/HVACDuctsLeakage'
+      - $ref: '#/components/schemas/HVACDuctsInsulation'
+      - $ref: '#/components/schemas/HVACDuctsLocation'
+      - $ref: '#/components/schemas/HVACAirDistributionEfficiency'
+      - $ref: '#/components/schemas/GroundThermalConductivity'
+      - $ref: '#/components/schemas/InfiltrationACH50'
+      - $ref: '#/components/schemas/WindowPanes'
+      - $ref: '#/components/schemas/WindowMetalFraming'
+      - $ref: '#/components/schemas/WindowLowE'
+      - $ref: '#/components/schemas/WindowStorm'
+      - $ref: '#/components/schemas/WindowToWallRatio'
+      - $ref: '#/components/schemas/RoofMaterial'
+      - $ref: '#/components/schemas/RoofOrCeilingInsulation'
+      - $ref: '#/components/schemas/AtticType'
+      - $ref: '#/components/schemas/WallType'
+      - $ref: '#/components/schemas/WallInsulation'
+      - $ref: '#/components/schemas/WallExteriorFinish'
+      - $ref: '#/components/schemas/FloorOrSlabInsulation'
+      - $ref: '#/components/schemas/FoundationType'
+      - $ref: '#/components/schemas/FoundationWallInsulation'
+      - $ref: '#/components/schemas/RimJoistInsulation'
+      - $ref: '#/components/schemas/EVCharging'
+      - $ref: '#/components/schemas/EVChargingStrategy'
+      - $ref: '#/components/schemas/EVChargingEfficiency'
+      - $ref: '#/components/schemas/EVMiles'
+      - $ref: '#/components/schemas/EVEfficiency'
+      - $ref: '#/components/schemas/Pool'
+      - $ref: '#/components/schemas/HotTub'
+      title: ConsumptionAttributesList1
+      discriminator:
+        propertyName: name
+        mapping:
+          attic_type: '#/components/schemas/AtticType'
+          building_type: '#/components/schemas/BuildingType'
+          ceiling_fan: '#/components/schemas/CeilingFan'
+          clothes_dryer_efficiency: '#/components/schemas/ClothesDryerEfficiency'
+          clothes_dryer_fuel: '#/components/schemas/ClothesDryerFuel'
+          clothes_washer_efficiency: '#/components/schemas/ClothesWasherEfficiency'
+          clothes_washer_hot_water_usage: '#/components/schemas/ClothesWasherHotWaterUsage'
+          cooking_range: '#/components/schemas/CookingRange'
+          dishwasher_efficiency: '#/components/schemas/DishwasherEfficiency'
+          ev_charging: '#/components/schemas/EVCharging'
+          ev_charging_efficiency: '#/components/schemas/EVChargingEfficiency'
+          ev_charging_strategy: '#/components/schemas/EVChargingStrategy'
+          ev_efficiency: '#/components/schemas/EVEfficiency'
+          ev_miles: '#/components/schemas/EVMiles'
+          floor_area: '#/components/schemas/FloorArea'
+          floor_or_slab_insulation: '#/components/schemas/FloorOrSlabInsulation'
+          foundation_type: '#/components/schemas/FoundationType'
+          foundation_wall_insulation: '#/components/schemas/FoundationWallInsulation'
+          freezer_extra_efficiency: '#/components/schemas/FreezerExtraEfficiency'
+          garage: '#/components/schemas/Garage'
+          ground_thermal_conductivity: '#/components/schemas/GroundThermalConductivity'
+          horizontal_location: '#/components/schemas/HorizontalLocation'
+          hot_tub: '#/components/schemas/HotTub'
+          hvac_air_distribution_efficiency: '#/components/schemas/HVACAirDistributionEfficiency'
+          hvac_cooling: '#/components/schemas/HVACCooling'
+          hvac_cooling_capacity: '#/components/schemas/HVACCoolingCapacity'
+          hvac_cooling_ducts: '#/components/schemas/HVACCoolingDucts'
+          hvac_cooling_efficiency: '#/components/schemas/HVACCoolingEfficiency'
+          hvac_cooling_partial_space_conditioning: '#/components/schemas/HVACCoolingPartialSpaceConditioning'
+          hvac_cooling_setpoint: '#/components/schemas/HVACCoolingSetpoint'
+          hvac_ducts_insulation: '#/components/schemas/HVACDuctsInsulation'
+          hvac_ducts_leakage: '#/components/schemas/HVACDuctsLeakage'
+          hvac_ducts_location: '#/components/schemas/HVACDuctsLocation'
+          hvac_heat_pump: '#/components/schemas/HVACHeatPump'
+          hvac_heating_capacity: '#/components/schemas/HVACHeatingCapacity'
+          hvac_heating_ducts: '#/components/schemas/HVACHeatingDucts'
+          hvac_heating_efficiency: '#/components/schemas/HVACHeatingEfficiency'
+          hvac_heating_fuel: '#/components/schemas/HVACHeatingFuel'
+          hvac_heating_setpoint: '#/components/schemas/HVACHeatingSetpoint'
+          hvac_secondary_heating_capacity: '#/components/schemas/HVACSecondaryHeatingCapacity'
+          hvac_secondary_heating_efficiency: '#/components/schemas/HVACSecondaryHeatingEfficiency'
+          hvac_secondary_heating_fuel: '#/components/schemas/HVACSecondaryHeatingFuel'
+          infiltration_ach50: '#/components/schemas/InfiltrationACH50'
+          lighting: '#/components/schemas/Lighting'
+          neighbors_distance: '#/components/schemas/NeighborsDistance'
+          num_bedrooms: '#/components/schemas/NumBedrooms'
+          num_occupants: '#/components/schemas/NumOccupants'
+          num_stories: '#/components/schemas/NumStories'
+          orientation: '#/components/schemas/Orientation'
+          plug_loads: '#/components/schemas/PlugLoads'
+          pool: '#/components/schemas/Pool'
+          refrigerator_efficiency: '#/components/schemas/RefrigeratorEfficiency'
+          refrigerator_extra_efficiency: '#/components/schemas/RefrigeratorExtraEfficiency'
+          rim_joist_insulation: '#/components/schemas/RimJoistInsulation'
+          roof_material: '#/components/schemas/RoofMaterial'
+          roof_or_ceiling_insulation: '#/components/schemas/RoofOrCeilingInsulation'
+          usage_level: '#/components/schemas/UsageLevel'
+          vertical_location: '#/components/schemas/VerticalLocation'
+          vintage: '#/components/schemas/Vintage'
+          wall_exterior_finish: '#/components/schemas/WallExteriorFinish'
+          wall_insulation: '#/components/schemas/WallInsulation'
+          wall_type: '#/components/schemas/WallType'
+          water_fixtures_usage: '#/components/schemas/WaterFixturesUsage'
+          water_heater: '#/components/schemas/WaterHeater'
+          water_heater_outlet_temperature: '#/components/schemas/WaterHeaterOutletTemperature'
+          window_low_e: '#/components/schemas/WindowLowE'
+          window_metal_framing: '#/components/schemas/WindowMetalFraming'
+          window_panes: '#/components/schemas/WindowPanes'
+          window_storm: '#/components/schemas/WindowStorm'
+          window_to_wall_ratio: '#/components/schemas/WindowToWallRatio'
+    ConnectionsLoss:
+      properties:
+        name:
+          type: string
+          const: connections_loss
+          title: Name
+          default: connections_loss
+        value:
+          type: number
+          title: Value
+          default: 0.005
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: ConnectionsLoss
+      description: 'Resistive losses in electrical connectors in the system; combined multiplicatively
+
+        with other DC losses.'
+    Units1:
+      type: string
+      enum:
+      - kWh
+      - monetary
+      title: Units1
+      description: Carryover ledger units for excess generation.
+    EmissionRateInput:
+      properties:
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+        units:
+          type: string
+          const: kgCO2e/kWh
+          title: Units
+          default: kgCO2e/kWh
+      type: object
+      required:
+      - value
+      title: EmissionRateInput
+    AgeLoss:
+      properties:
+        name:
+          type: string
+          const: age_loss
+          title: Name
+          default: age_loss
+        value:
+          type: number
+          title: Value
+          default: 0
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: AgeLoss
+      description: 'Effect of weathering of the photovoltaic modules on the array''s performance over
+
+        time; combined multiplicatively with other DC losses.'
+    Tariff:
+      properties:
+        type:
+          type: string
+          const: tariff
+          title: Type
+          default: tariff
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+          description: Tariff notes/context
+        code:
+          type: string
+          title: Code
+        effective_date:
+          type: string
+          title: Effective Date
+        source_url:
+          type: string
+          title: Source Url
+        rates:
+          items:
+            $ref: '#/components/schemas/Rate'
+          type: array
+          minItems: 1
+          title: Rates
+        net_metering_options:
+          $ref: '#/components/schemas/NetMeteringOptions'
+          title: Net Metering Options
+          description: Tariff-wide policy for how excess generation credits (e.g. net, net_exports, exports) are tracked and settled.
+        meta:
+          $ref: '#/components/schemas/TariffMeta'
+          title: Meta
+          description: Metadata about the data source
+        warnings:
+          items:
+            type: string
+          type: array
+          title: Warnings
+          description: Issues encountered when parsing the tariff into the internal schema. Includes unsupported features, non-default configurations, and validation errors. Entries prefixed with `[error]` indicate parsing failures that may have resulted in excluded rates, or other more severe irregularities.
+      type: object
+      required:
+      - rates
+      title: Tariff
+    CapacityCurve:
+      anyOf:
+      - $ref: '#/components/schemas/CapacityCurve1'
+      - $ref: '#/components/schemas/CapacityCurve2'
+      title: CapacityCurve
+      description: Temparature-based Parameter Curve
+    ProductionElectricityCurtailed:
+      type: number
+      minimum: 0.0
+      title: ProductionElectricityCurtailed
+    ConsumptionFossilFuelHotWater:
+      type: number
+      minimum: 0.0
+      title: ConsumptionFossilFuelHotWater
+    CookingRangeEnum:
+      type: string
+      enum:
+      - None
+      - Electric Induction
+      - Electric Resistance
+      - Gas
+      title: CookingRangeEnum
+    IntervalFormat:
+      type: string
+      enum:
+      - long
+      - wide
+      title: IntervalFormat
+      description: "Shape format for intervals data.\n- 'long' format will return multiple intervals for each time step (based on number of variables)\n  e.g. [{variable: <var1>, value: <val1>, ...}, {variable: <var2>, value: <val2>, ...}, ...]\n- 'wide' format will return a single interval for each time step\n  e.g. [{<var1>: val1, <var2>: val2, ...}, ...]"
+    VintageSource:
+      type: string
+      enum:
+      - acs
+      - regrid
+      - resstock
+      title: VintageSource
+    DataSourcesMeta:
+      properties:
+        building_type_source:
+          $ref: '#/components/schemas/BuildingTypeSource'
+          title: Building Type Source
+        floor_area_source:
+          $ref: '#/components/schemas/FloorAreaSource'
+          title: Floor Area Source
+        floor_area_source_model:
+          $ref: '#/components/schemas/FloorAreaSourceModel'
+          title: Floor Area Source Model
+        heating_fuel_source:
+          $ref: '#/components/schemas/HeatingFuelSource'
+          title: Heating Fuel Source
+        vintage_source:
+          $ref: '#/components/schemas/VintageSource'
+          title: Vintage Source
+        num_stories_source:
+          $ref: '#/components/schemas/NumStoriesSource'
+          title: Num Stories Source
+        census_block_group_geoid:
+          type: string
+          title: Census Block Group Geoid
+        regrid_parcel_uuid:
+          type: string
+          format: uuid
+          title: Regrid Parcel Uuid
+      type: object
+      title: DataSourcesMeta
+    VerticalLocationEnum:
+      type: string
+      enum:
+      - Top
+      - Middle
+      - Bottom
+      - None
+      title: VerticalLocationEnum
+    HVACSecondaryHeatingFuel:
+      properties:
+        name:
+          type: string
+          const: hvac_secondary_heating_fuel
+          title: Name
+          default: hvac_secondary_heating_fuel
+        value:
+          $ref: '#/components/schemas/HeatingFuelTypeEnum'
+      type: object
+      required:
+      - value
+      title: HVACSecondaryHeatingFuel
+      description: 'HVAC Secondary Heating Fuel Type
+
+        Ignored when hvac_heat_pump is False'
+    UtilityFlatRate:
+      properties:
+        type:
+          type: string
+          const: flat_rate
+          title: Type
+          default: flat_rate
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+        units:
+          type: string
+          const: $/kWh
+          title: Units
+          default: $/kWh
+        meta:
+          anyOf:
+          - $ref: '#/components/schemas/EIAUtilityElectricRateMeta'
+          - $ref: '#/components/schemas/EIAResidentialStateRateMeta'
+          title: Meta
+          description: Metadata about the data source. Server-populated field; user-provided values are ignored.
+      type: object
+      required:
+      - value
+      title: UtilityFlatRate
+    ClothesDryerEfficiencyEnum:
+      type: string
+      enum:
+      - None
+      - Standard
+      - EnergyStar
+      title: ClothesDryerEfficiencyEnum
+    HVACHeatingFuel:
+      properties:
+        name:
+          type: string
+          const: hvac_heating_fuel
+          title: Name
+          default: hvac_heating_fuel
+        value:
+          $ref: '#/components/schemas/HeatingFuelTypeEnum'
+      type: object
+      required:
+      - value
+      title: HVACHeatingFuel
+      description: HVAC Heating Fuel Type
+    Garage:
+      properties:
+        name:
+          type: string
+          const: garage
+          title: Name
+          default: garage
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: Garage
+      description: Garage Present
+    ConsumptionElectricityCeilingFan:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityCeilingFan
+    HVACDuctsLocation:
+      properties:
+        name:
+          type: string
+          const: hvac_ducts_location
+          title: Name
+          default: hvac_ducts_location
+        value:
+          $ref: '#/components/schemas/HVACDuctsLocationEnum'
+      type: object
+      required:
+      - value
+      title: HVACDuctsLocation
+      description: 'HVAC Ducts Location
+
+        Ignored when hvac_heating_ducts and hvac_cooling_ducts are False'
+    HVACDuctsLeakage:
+      properties:
+        name:
+          type: string
+          const: hvac_ducts_leakage
+          title: Name
+          default: hvac_ducts_leakage
+        value:
+          type: number
+          maximum: 0.3
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACDuctsLeakage
+      description: 'HVAC Ducts Leakage as a fraction of the total air flow
+
+        Ignored when hvac_heating_ducts and hvac_cooling_ducts are False'
+    EVMiles:
+      properties:
+        name:
+          type: string
+          const: ev_miles
+          title: Name
+          default: ev_miles
+        value:
+          type: number
+          maximum: 100000.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: EVMiles
+      description: 'EV Miles Driven per year
+
+        Ignored when ev_charging is False'
+    COPEfficiencyCurve2:
+      items:
+        $ref: '#/components/schemas/COPEfficiency'
+      type: array
+      minItems: 1
+      title: COPEfficiencyCurve2
+      description: Temparature-based Parameter Curve
+    COPEfficiencyCurve:
+      anyOf:
+      - $ref: '#/components/schemas/COPEfficiencyCurve1'
+      - $ref: '#/components/schemas/COPEfficiencyCurve2'
+      title: COPEfficiencyCurve
+      description: Temparature-based Parameter Curve
+    Setpoint2Item:
+      type: number
+      maximum: 38.0
+      minimum: 10.0
+      title: Setpoint2Item
+    WideInterval:
+      properties:
+        from_datetime:
+          type: string
+          format: date-time
+          title: From Datetime
+        to_datetime:
+          type: string
+          format: date-time
+          title: To Datetime
+        consumption:
+          $ref: '#/components/schemas/Consumption1'
+          title: Consumption
+        consumption.electricity:
+          $ref: '#/components/schemas/ConsumptionElectricity'
+          title: Consumption.Electricity
+        consumption.electricity.refrigerator:
+          $ref: '#/components/schemas/ConsumptionElectricityRefrigerator'
+          title: Consumption.Electricity.Refrigerator
+        consumption.electricity.cooking_range:
+          $ref: '#/components/schemas/ConsumptionElectricityCookingRange'
+          title: Consumption.Electricity.Cooking Range
+        consumption.electricity.dishwasher:
+          $ref: '#/components/schemas/ConsumptionElectricityDishwasher'
+          title: Consumption.Electricity.Dishwasher
+        consumption.electricity.clothes_washer:
+          $ref: '#/components/schemas/ConsumptionElectricityClothesWasher'
+          title: Consumption.Electricity.Clothes Washer
+        consumption.electricity.clothes_dryer:
+          $ref: '#/components/schemas/ConsumptionElectricityClothesDryer'
+          title: Consumption.Electricity.Clothes Dryer
+        consumption.electricity.hot_water:
+          $ref: '#/components/schemas/ConsumptionElectricityHotWater'
+          title: Consumption.Electricity.Hot Water
+        consumption.electricity.lighting:
+          $ref: '#/components/schemas/ConsumptionElectricityLighting'
+          title: Consumption.Electricity.Lighting
+        consumption.electricity.ceiling_fan:
+          $ref: '#/components/schemas/ConsumptionElectricityCeilingFan'
+          title: Consumption.Electricity.Ceiling Fan
+        consumption.electricity.plug_loads:
+          $ref: '#/components/schemas/ConsumptionElectricityPlugLoads'
+          title: Consumption.Electricity.Plug Loads
+        consumption.electricity.ev:
+          $ref: '#/components/schemas/ConsumptionElectricityEv'
+          title: Consumption.Electricity.Ev
+        consumption.electricity.pool:
+          $ref: '#/components/schemas/ConsumptionElectricityPool'
+          title: Consumption.Electricity.Pool
+        consumption.electricity.hot_tub:
+          $ref: '#/components/schemas/ConsumptionElectricityHotTub'
+          title: Consumption.Electricity.Hot Tub
+        consumption.electricity.heating:
+          $ref: '#/components/schemas/ConsumptionElectricityHeating'
+          title: Consumption.Electricity.Heating
+        consumption.electricity.cooling:
+          $ref: '#/components/schemas/ConsumptionElectricityCooling'
+          title: Consumption.Electricity.Cooling
+        consumption.electricity.duct_fan:
+          $ref: '#/components/schemas/ConsumptionElectricityDuctFan'
+          title: Consumption.Electricity.Duct Fan
+        consumption.fossil_fuel:
+          $ref: '#/components/schemas/ConsumptionFossilFuel'
+          title: Consumption.Fossil Fuel
+        consumption.fossil_fuel.cooking_range:
+          $ref: '#/components/schemas/ConsumptionFossilFuelCookingRange'
+          title: Consumption.Fossil Fuel.Cooking Range
+        consumption.fossil_fuel.clothes_dryer:
+          $ref: '#/components/schemas/ConsumptionFossilFuelClothesDryer'
+          title: Consumption.Fossil Fuel.Clothes Dryer
+        consumption.fossil_fuel.hot_water:
+          $ref: '#/components/schemas/ConsumptionFossilFuelHotWater'
+          title: Consumption.Fossil Fuel.Hot Water
+        consumption.fossil_fuel.pool:
+          $ref: '#/components/schemas/ConsumptionFossilFuelPool'
+          title: Consumption.Fossil Fuel.Pool
+        consumption.fossil_fuel.hot_tub:
+          $ref: '#/components/schemas/ConsumptionFossilFuelHotTub'
+          title: Consumption.Fossil Fuel.Hot Tub
+        consumption.fossil_fuel.heating:
+          $ref: '#/components/schemas/ConsumptionFossilFuelHeating'
+          title: Consumption.Fossil Fuel.Heating
+        consumption.electricity.residual:
+          type: number
+          title: Consumption.Electricity.Residual
+        consumption.fossil_fuel.residual:
+          type: number
+          title: Consumption.Fossil Fuel.Residual
+        thermal_demand.heating:
+          $ref: '#/components/schemas/ThermalDemandHeating'
+          title: Thermal Demand.Heating
+        thermal_demand.heating.unutilized:
+          $ref: '#/components/schemas/ThermalDemandHeatingUnutilized'
+          title: Thermal Demand.Heating.Unutilized
+        thermal_demand.heating.delivered:
+          $ref: '#/components/schemas/ThermalDemandHeatingDelivered'
+          title: Thermal Demand.Heating.Delivered
+        thermal_demand.heating.unmet:
+          $ref: '#/components/schemas/ThermalDemandHeatingUnmet'
+          title: Thermal Demand.Heating.Unmet
+        thermal_demand.cooling:
+          $ref: '#/components/schemas/ThermalDemandCooling'
+          title: Thermal Demand.Cooling
+        thermal_demand.cooling.unutilized:
+          $ref: '#/components/schemas/ThermalDemandCoolingUnutilized'
+          title: Thermal Demand.Cooling.Unutilized
+        thermal_demand.cooling.delivered:
+          $ref: '#/components/schemas/ThermalDemandCoolingDelivered'
+          title: Thermal Demand.Cooling.Delivered
+        thermal_demand.cooling.unmet:
+          $ref: '#/components/schemas/ThermalDemandCoolingUnmet'
+          title: Thermal Demand.Cooling.Unmet
+        thermal_demand.cooling.sensible:
+          $ref: '#/components/schemas/ThermalDemandCoolingSensible'
+          title: Thermal Demand.Cooling.Sensible
+        thermal_demand.cooling.latent:
+          $ref: '#/components/schemas/ThermalDemandCoolingLatent'
+          title: Thermal Demand.Cooling.Latent
+        production.electricity:
+          $ref: '#/components/schemas/ProductionElectricity'
+          title: Production.Electricity
+        production.electricity.utilized:
+          $ref: '#/components/schemas/ProductionElectricityUtilized'
+          title: Production.Electricity.Utilized
+        production.electricity.curtailed:
+          $ref: '#/components/schemas/ProductionElectricityCurtailed'
+          title: Production.Electricity.Curtailed
+        storage.electricity.charge:
+          $ref: '#/components/schemas/StorageElectricityCharge'
+          title: Storage.Electricity.Charge
+        storage.electricity.discharge:
+          $ref: '#/components/schemas/StorageElectricityDischarge'
+          title: Storage.Electricity.Discharge
+        storage.electricity.state_of_charge:
+          $ref: '#/components/schemas/StorageElectricityStateOfCharge'
+          title: Storage.Electricity.State Of Charge
+        grid.electricity.import:
+          $ref: '#/components/schemas/GridElectricityImport'
+          title: Grid.Electricity.Import
+        grid.electricity.export:
+          $ref: '#/components/schemas/GridElectricityExport'
+          title: Grid.Electricity.Export
+        grid.fossil_fuel.import:
+          $ref: '#/components/schemas/GridFossilFuelImport'
+          title: Grid.Fossil Fuel.Import
+        costs:
+          type: number
+          title: Costs
+        costs.electricity:
+          type: number
+          title: Costs.Electricity
+        costs.electricity.imports:
+          type: number
+          title: Costs.Electricity.Imports
+        costs.electricity.exports:
+          type: number
+          title: Costs.Electricity.Exports
+        costs.electricity.consumption:
+          type: number
+          title: Costs.Electricity.Consumption
+        costs.electricity.fixed:
+          type: number
+          title: Costs.Electricity.Fixed
+        costs.electricity.demand:
+          type: number
+          title: Costs.Electricity.Demand
+        costs.electricity.pv_capacity:
+          type: number
+          title: Costs.Electricity.Pv Capacity
+        costs.electricity.pv_production:
+          type: number
+          title: Costs.Electricity.Pv Production
+        costs.electricity.surcharges:
+          type: number
+          title: Costs.Electricity.Surcharges
+        costs.electricity.minimum_adjustments:
+          type: number
+          title: Costs.Electricity.Minimum Adjustments
+        costs.electricity.taxes:
+          type: number
+          title: Costs.Electricity.Taxes
+        costs.fossil_fuel:
+          type: number
+          title: Costs.Fossil Fuel
+        emissions:
+          $ref: '#/components/schemas/Emissions'
+        emissions.electricity:
+          $ref: '#/components/schemas/EmissionsElectricity'
+          title: Emissions.Electricity
+        emissions.fossil_fuel:
+          $ref: '#/components/schemas/EmissionsFossilFuel'
+          title: Emissions.Fossil Fuel
+        weather.air_temperature:
+          type: number
+          title: Weather.Air Temperature
+        weather.relative_humidity:
+          type: number
+          title: Weather.Relative Humidity
+        weather.wind_speed:
+          type: number
+          title: Weather.Wind Speed
+        weather.ghi:
+          type: number
+          title: Weather.Ghi
+        weather.dni:
+          type: number
+          title: Weather.Dni
+        weather.dhi:
+          type: number
+          title: Weather.Dhi
+      type: object
+      required:
+      - from_datetime
+      - to_datetime
+      title: WideInterval
+    PanelArrays:
+      properties:
+        name:
+          type: string
+          const: panel_arrays
+          title: Name
+          default: panel_arrays
+        value:
+          items:
+            $ref: '#/components/schemas/PanelArray'
+          type: array
+          title: Value
+          description: List of panel arrays
+      type: object
+      required:
+      - value
+      title: PanelArrays
+      description: Panel Arrays Configuration
+    ConsumptionElectricityHotTub:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityHotTub
+    NumBedrooms:
+      properties:
+        name:
+          type: string
+          const: num_bedrooms
+          title: Name
+          default: num_bedrooms
+        value:
+          type: integer
+          maximum: 5.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: NumBedrooms
+      description: Number of bedrooms
+    Band:
+      properties:
+        description:
+          type: string
+          title: Description
+          description: '[Optional Annotation]'
+        amount:
+          type: number
+          title: Amount
+          description: Charge amount for this band in $/quantity. A positive value is a cost while a negative value is a credit on a customer's bill
+        limit:
+          $ref: '#/components/schemas/Limit'
+        citation:
+          $ref: '#/components/schemas/Citation'
+      type: object
+      required:
+      - amount
+      title: Band
+      description: different tiers or levels based on the quantity of electricity consumed
+    WindowLowE:
+      properties:
+        name:
+          type: string
+          const: window_low_e
+          title: Name
+          default: window_low_e
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: WindowLowE
+      description: Windows are Low-E
+    InfiltrationACH50:
+      properties:
+        name:
+          type: string
+          const: infiltration_ach50
+          title: Name
+          default: infiltration_ach50
+        value:
+          type: integer
+          maximum: 50.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: InfiltrationACH50
+      description: Infiltration ACH50
+    NumStoriesSource:
+      type: string
+      enum:
+      - regrid
+      - resstock
+      title: NumStoriesSource
+    WindowStorm:
+      properties:
+        name:
+          type: string
+          const: window_storm
+          title: Name
+          default: window_storm
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: WindowStorm
+      description: Windows have additional Exterior Storm Windows
+    ConsumptionElectricityDishwasher:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityDishwasher
+    Lighting:
+      properties:
+        name:
+          type: string
+          const: lighting
+          title: Name
+          default: lighting
+        value:
+          $ref: '#/components/schemas/LightingEnum'
+      type: object
+      required:
+      - value
+      title: Lighting
+      description: Lighting Type
+    ConsumptionElectricityLighting:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityLighting
+    ConsumptionElectricityPool:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityPool
+    HVACSecondaryHeatingEfficiency:
+      properties:
+        name:
+          type: string
+          const: hvac_secondary_heating_efficiency
+          title: Name
+          default: hvac_secondary_heating_efficiency
+        value:
+          type: number
+          maximum: 1.0
+          minimum: 0.1
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACSecondaryHeatingEfficiency
+      description: 'HVAC Secondary Heating Efficiency as COP (Coefficient of Performance)
+
+        COP = Energy Delivered / Energy Consumed
+
+        Secondary heating is used when a heat pump is not sufficient
+
+        Ignored when hvac_heat_pump is False
+
+        Note that only heat pumps can have a COP > 1.0'
+    ActualProductionInterval:
+      properties:
+        from_datetime:
+          type: string
+          format: date-time
+          title: From Datetime
+        to_datetime:
+          type: string
+          format: date-time
+          title: To Datetime
+        variable:
+          type: string
+          const: production.electricity
+          title: Variable
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - from_datetime
+      - to_datetime
+      - variable
+      - value
+      title: ActualProductionInterval
+      description: Interval for actual known production data
+    WallExteriorFinish:
+      properties:
+        name:
+          type: string
+          const: wall_exterior_finish
+          title: Name
+          default: wall_exterior_finish
+        value:
+          $ref: '#/components/schemas/WallExteriorFinishEnum'
+      type: object
+      required:
+      - value
+      title: WallExteriorFinish
+      description: Wall Exterior Finish
+    EmissionRates:
+      properties:
+        electricity:
+          $ref: '#/components/schemas/EmissionRate'
+        fossil_fuel:
+          $ref: '#/components/schemas/EmissionRate'
+      type: object
+      required:
+      - electricity
+      - fossil_fuel
+      title: EmissionRates
+    RoofOrCeilingInsulation:
+      properties:
+        name:
+          type: string
+          const: roof_or_ceiling_insulation
+          title: Name
+          default: roof_or_ceiling_insulation
+        value:
+          type: integer
+          maximum: 60.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: RoofOrCeilingInsulation
+      description: 'R-Value of Roof or Ceiling Insulation
+
+        Set to 1 for Uninsulated'
+    FloorArea:
+      properties:
+        name:
+          type: string
+          const: floor_area
+          title: Name
+          default: floor_area
+        value:
+          type: number
+          maximum: 1000.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: FloorArea
+      description: Total floor area in square meters
+    StorageElectricityDischarge:
+      type: number
+      minimum: 0.0
+      title: StorageElectricityDischarge
+    ClothesDryerEfficiency:
+      properties:
+        name:
+          type: string
+          const: clothes_dryer_efficiency
+          title: Name
+          default: clothes_dryer_efficiency
+        value:
+          $ref: '#/components/schemas/ClothesDryerEfficiencyEnum'
+      type: object
+      required:
+      - value
+      title: ClothesDryerEfficiency
+      description: Clothes Dryer Efficiency
+    RefrigeratorEfficiency:
+      properties:
+        name:
+          type: string
+          const: refrigerator_efficiency
+          title: Name
+          default: refrigerator_efficiency
+        value:
+          type: number
+          maximum: 1360.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: RefrigeratorEfficiency
+      description: 'Refrigerator Rated Annual Energy Consumption [kWh]
+
+        - EnergyStar: 400 kWh/year
+
+        Reference: https://www.energystar.gov/products/refrigerators/key_product_criteria'
+    AvailabilityLoss:
+      properties:
+        name:
+          type: string
+          const: availability_loss
+          title: Name
+          default: availability_loss
+        value:
+          type: number
+          title: Value
+          default: 0.03
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: AvailabilityLoss
+      description: 'Reduction in the system''s output cause by scheduled and unscheduled system shutdown
+
+        for maintenance, grid outages, and other operational factors; combined multiplicatively
+
+        with other DC losses.'
+    RateType:
+      type: string
+      enum:
+      - fixed
+      - imports
+      - exports
+      - net
+      - net_imports
+      - net_exports
+      - demand
+      - surcharge
+      - minimum
+      - tax
+      - pv_capacity
+      - pv_production
+      - consumption
+      title: RateType
+      description: 'Identifies the type of bill line item a rate produces.
+
+
+        Each category determines what quantity (if any) the rate''s amount
+
+        is applied to and where it fits in the bill calculation:
+
+
+        fixed: flat dollar amount per billing period
+
+        imports: $/kWh applied to electricity drawn from the grid
+
+        exports: $/kWh applied to electricity sent to the grid
+
+        net: $/kWh applied to net consumption (imports - exports); charges on positive net, credits on negative
+
+        net_imports: $/kWh applied to max(imports - exports, 0)
+
+        net_exports: $/kWh applied to max(exports - imports, 0)
+
+        demand: $/kW applied to peak power draw during the billing period
+
+        surcharge: percentage applied to net positive energy costs (e.g. 0.10 = 10%)
+
+        minimum: minimum dollar floor on the pre-tax subtotal
+
+        tax: percentage applied to the final subtotal (e.g. 0.07 = 7%)
+
+        pv_capacity: $/kW applied to installed solar system size
+
+        pv_production: $/kWh applied to on-site solar generation (e.g. PPA)
+
+        consumption: $/kWh applied to total home electricity consumption regardless of source (e.g. buy all sell all)'
+    UtilityRates:
+      properties:
+        electricity:
+          anyOf:
+          - $ref: '#/components/schemas/UtilityFlatRate'
+          - $ref: '#/components/schemas/Tariff'
+          - type: 'null'
+          title: Electricity
+          description: Buy rate or Tariff for electricity. May be `null` when the underlying rate source is unavailable to the caller.
+        fossil_fuel:
+          $ref: '#/components/schemas/UtilityFlatRate'
+        pv_ppa:
+          $ref: '#/components/schemas/UtilityFlatRate'
+          title: Pv Ppa
+        pv_buyback:
+          $ref: '#/components/schemas/UtilityFlatRate'
+          title: Pv Buyback
+      type: object
+      required:
+      - fossil_fuel
+      title: UtilityRates
+      description: Utility energy rates information
+    CalibrationMethod:
+      type: string
+      enum:
+      - uniform-mean
+      - linear-interpolation
+      - cyclic-regression
+      title: CalibrationMethod
+      description: "Method for calibrating energy consumption. After the building ensemble is selected and\nthe initial loads are estimated, the calibration process will scale the estimated loads to better match\nany known actual consumption data.\n- 'uniform-mean' calculates an average multiplier for all actual consumption data points and then\n  applies that multiplier to all timesteps uniformly.\n- 'linear-interpolation' calculates multipliers for each time period and then\n  linearly interpolates the multipliers for all other timesteps. For values outside the range of\n  actual consumption data, the nearest multiplier is used. This method is intended to deal with buildings\n  that may have varied over time (e.g., due to changes in upgrades, occupancy, or behavior).\n- 'cyclic-regression' fits a regression model to the actual vs. estimated consumption data, and then\n  applies that model to all timesteps. This method is intended to better capture cyclical patterns\n  such as seasonal variations."
+    Period:
+      properties:
+        description:
+          type: string
+          title: Description
+          description: '[Optional Annotation]'
+        start_day_of_week:
+          type: integer
+          maximum: 6.0
+          minimum: 0.0
+          title: Start Day Of Week
+          description: 0-6 Monday-Sunday
+        start_hour:
+          type: integer
+          maximum: 23.0
+          minimum: 0.0
+          title: Start Hour
+          description: 24-hour format
+        start_minute:
+          type: integer
+          title: Start Minute
+          default: 0
+          ge: 0
+          le: 59
+        end_day_of_week:
+          type: integer
+          maximum: 6.0
+          minimum: 0.0
+          title: End Day Of Week
+          description: 0-6 Monday-Sunday
+        end_hour:
+          type: integer
+          maximum: 23.0
+          minimum: 0.0
+          title: End Hour
+          description: 24-hour format
+        end_minute:
+          type: integer
+          title: End Minute
+          default: 0
+          ge: 0
+          le: 59
+      type: object
+      required:
+      - start_day_of_week
+      - start_hour
+      - end_day_of_week
+      - end_hour
+      title: Period
+      description: 'a range of days within a week and times within a day (exclusive of end hour:minute).
+
+
+        When start_hour == end_hour, the period covers all 24 hours of the specified days.'
+    COPEfficiency:
+      properties:
+        temperature:
+          type: number
+          maximum: 40.0
+          minimum: -25.0
+          title: Temperature
+        value:
+          type: number
+          maximum: 10.0
+          minimum: 0.1
+          title: Value
+      type: object
+      required:
+      - temperature
+      - value
+      title: COPEfficiency
+      description: "Coefficient of Performance at a specific outdoor dry bulb temperature [°C]\nCOP = Energy Delivered / Energy Consumed\nCommonly rated at:\n    Heating: 5°F (-15°C) and 47°F (8.33°C)\n    Cooling: 82°F (27.78°C) and 95°F (35°C)"
+    EVChargingStrategyEnum:
+      type: string
+      enum:
+      - immediate_fast
+      - immediate_slow
+      - delayed_by_departure
+      - delayed_at_midnight
+      title: EVChargingStrategyEnum
+    OrientationEnum:
+      type: string
+      enum:
+      - North
+      - Northeast
+      - East
+      - Southeast
+      - South
+      - Southwest
+      - West
+      - Northwest
+      title: OrientationEnum
+    ActualConsumption:
+      items:
+        $ref: '#/components/schemas/ActualConsumptionInterval'
+      type: array
+      minItems: 1
+      title: ActualConsumption
+      description: List of actual consumption intervals
+    ConsumptionElectricityPlugLoads:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityPlugLoads
+    TrueUpMonth:
+      type: integer
+      maximum: 12.0
+      minimum: 1.0
+      title: TrueUpMonth
+      description: Month (1-12) in which any remaining excess generation credits are forfeited or cashed out. If null, credits carry over indefinitely until fully used.
+    BatteryPower:
+      properties:
+        name:
+          type: string
+          const: power
+          title: Name
+          default: power
+        value:
+          type: number
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: BatteryPower
+      description: Battery Power [AC kW]
+    HVACHeatingDucts:
+      properties:
+        name:
+          type: string
+          const: hvac_heating_ducts
+          title: Name
+          default: hvac_heating_ducts
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACHeatingDucts
+      description: HVAC Ducts are used for Heating
+    FloorAreaSource:
+      type: string
+      enum:
+      - regrid
+      - realtor.com
+      - inferred
+      - resstock
+      title: FloorAreaSource
+    NeighborsDistance:
+      properties:
+        name:
+          type: string
+          const: neighbors_distance
+          title: Name
+          default: neighbors_distance
+        value:
+          type: number
+          maximum: 30.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: NeighborsDistance
+      description: 'Distance to neighboring buildings [m]
+
+        If there are no immediate neighbors in any direction, set to the max 30.0 meters.'
+    Rate:
+      properties:
+        rate_type:
+          $ref: '#/components/schemas/RateType'
+        name:
+          type: string
+          title: Name
+          description: Concise display name
+        description:
+          type: string
+          title: Description
+          description: '[Optional Annotation]'
+        charge_period:
+          $ref: '#/components/schemas/ChargePeriod'
+        bands:
+          items:
+            $ref: '#/components/schemas/Band'
+          type: array
+          minItems: 1
+          title: Bands
+        season:
+          $ref: '#/components/schemas/Season'
+        periods:
+          $ref: '#/components/schemas/Periods'
+        after_tax:
+          type: boolean
+          title: After Tax
+          description: 'Indicates whether this rate is applied pre-tax or post-tax. If false (default), the rate is applied to the subtotal before tax is calculated. If true, the rate is applied after tax. '
+          default: false
+        non_bypassable:
+          type: boolean
+          title: Non Bypassable
+          description: 'Indicates whether this rate can be bypassed with export credits. If false, credits from export rates (e.g. net, net_exports, exports) can offset charges from this rate. If true, this rate is applied in full regardless of any export credits. '
+          default: false
+        from_datetime:
+          type: string
+          format: date-time
+          title: From Datetime
+          description: Start datetime for which this rate is effective
+        to_datetime:
+          type: string
+          format: date-time
+          title: To Datetime
+          description: End datetime for which this rate is effective
+        citation:
+          $ref: '#/components/schemas/Citation'
+      type: object
+      required:
+      - rate_type
+      - name
+      - charge_period
+      - bands
+      title: Rate
+    Emissions:
+      type: number
+      minimum: 0.0
+      title: Emissions
+    HeatingFuelSource:
+      type: string
+      enum:
+      - acs
+      - resstock
+      title: HeatingFuelSource
+    EVEfficiency:
+      properties:
+        name:
+          type: string
+          const: ev_efficiency
+          title: Name
+          default: ev_efficiency
+        value:
+          type: number
+          maximum: 0.5
+          minimum: 0.2
+          title: Value
+      type: object
+      required:
+      - value
+      title: EVEfficiency
+      description: 'EV Efficiency as kWh per mile
+
+        Ignored when ev_charging is False'
+    FloorOrSlabInsulation:
+      properties:
+        name:
+          type: string
+          const: floor_or_slab_insulation
+          title: Name
+          default: floor_or_slab_insulation
+        value:
+          type: integer
+          maximum: 30.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: FloorOrSlabInsulation
+      description: 'R-Value of Floor or Slab Insulation
+
+        Set to 1 for Uninsulated'
+    Production:
+      properties:
+        attributes:
+          $ref: '#/components/schemas/ProductionScenarios'
+          title: Attributes
+        actuals:
+          $ref: '#/components/schemas/ActualProduction'
+          title: Actuals
+        calibration:
+          $ref: '#/components/schemas/ProductionCalibration'
+          title: Calibration
+      type: object
+      title: Production
+      description: Payload Schema for a Production data
+    ConsumptionElectricityDuctFan:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityDuctFan
+    ConsumptionElectricity:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricity
+    ShadingLoss:
+      properties:
+        name:
+          type: string
+          const: shading_loss
+          title: Name
+          default: shading_loss
+        value:
+          type: number
+          title: Value
+          default: 0.03
+          ge: 0.0
+          lt: 1.0
+      type: object
+      title: ShadingLoss
+      description: 'Power losses from shadows cast by nearby objects or self-shading; combined
+
+        multiplicatively with other DC losses.'
+    DishwasherEfficiency:
+      properties:
+        name:
+          type: string
+          const: dishwasher_efficiency
+          title: Name
+          default: dishwasher_efficiency
+        value:
+          type: number
+          maximum: 318.0
+          minimum: 0.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: DishwasherEfficiency
+      description: 'Dishwasher Rated Annual Energy Consumption [kWh]
+
+        - Inefficient: 318 kWh/year
+
+        - Standard: 290 kWh/year
+
+        - EnergyStar: 240 kWh/year
+
+        - EnergyStar Compact: 155 kWh/year
+
+        Reference: https://www.energystar.gov/products/dishwashers/key_product_criteria'
+    ProductionCalibration:
+      properties:
+        method:
+          $ref: '#/components/schemas/CalibrationMethod'
+          title: Method
+          default: uniform-mean
+        use_actual_weather:
+          type: boolean
+          title: Use Actual Weather
+          description: 'Use actual historical weather (and forecast for future periods) to calibrate production actuals. Auto‑enabled if any other use_actual_weather flag in the request is true. NOTE: Using actual weather incurs additional per-request charges.'
+          default: false
+      type: object
+      title: ProductionCalibration
+      description: Payload Schema for Consumption Calibration
+    HVACHeatingCapacity:
+      properties:
+        name:
+          type: string
+          const: hvac_heating_capacity
+          title: Name
+          default: hvac_heating_capacity
+        value:
+          $ref: '#/components/schemas/CapacityCurve'
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACHeatingCapacity
+      description: HVAC Heating Capacity [kBtu/hr] at a specific outdoor dry bulb temperature [°C]
+    ThermalDemandHeatingUnutilized:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandHeatingUnutilized
+    CostsInput:
+      properties:
+        utility_rates:
+          $ref: '#/components/schemas/UtilityRatesInput'
+          title: Utility Rates
+        emission_rates:
+          $ref: '#/components/schemas/EmissionRatesInput'
+          title: Emission Rates
+        fossil_fuel_type:
+          $ref: '#/components/schemas/FossilFuelType'
+          title: Fossil Fuel Type
+          description: Fossil fuel type for non-electric utility rates. If not specified, the modal fossil fuel type for the location will be used.
+        use_tariff_history:
+          type: boolean
+          title: Use Tariff History
+          description: When passing an inline `Tariff` for electric utility rates, controls whether the `from_datetime` and `to_datetime` fields on individual `Rate` entries are honored. If `false` (default), tariffs are treated as time-invariant and rate effective dates are ignored. If `true`, each rate applies only during its effective date range (a null `from_datetime` or `to_datetime` is treated as open-ended), and costs are zero for periods not covered by any active rate.
+          default: false
+      type: object
+      title: CostsInput
+      description: Payload Schema for Monetary and Emission Costs
+    NetMeteringOptions:
+      properties:
+        description:
+          type: string
+          title: Description
+          description: '[Optional Annotation]'
+        policy_type:
+          $ref: '#/components/schemas/NetMeteringPolicyType'
+        units:
+          $ref: '#/components/schemas/Units1'
+          title: Units
+        true_up_rate:
+          type: number
+          title: True Up Rate
+          description: Rate at which excess generation credits are cashed out if not carried over.
+          default: 0
+          ge: 0.0
+        true_up_month:
+          $ref: '#/components/schemas/TrueUpMonth'
+          title: True Up Month
+      type: object
+      required:
+      - policy_type
+      - units
+      title: NetMeteringOptions
+      description: Tariff-wide net metering policy.
+    EmissionsFossilFuel:
+      type: number
+      minimum: 0.0
+      title: EmissionsFossilFuel
+    ThermalDemandCoolingDelivered:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandCoolingDelivered
+    HVACDuctsLocationEnum:
+      type: string
+      enum:
+      - Living Space
+      - Heated Basement
+      - Unheated Basement
+      - Crawlspace
+      - Garage
+      - Attic
+      - None
+      title: HVACDuctsLocationEnum
+    VerticalLocation:
+      properties:
+        name:
+          type: string
+          const: vertical_location
+          title: Name
+          default: vertical_location
+        value:
+          $ref: '#/components/schemas/VerticalLocationEnum'
+      type: object
+      required:
+      - value
+      title: VerticalLocation
+      description: Vertical Location in a Multi-Family building
+    Citation:
+      properties:
+        source_url:
+          type: string
+          title: Source Url
+        page:
+          type: integer
+          title: Page
+        section:
+          type: string
+          title: Section
+        excerpt:
+          type: string
+          maxLength: 500
+          title: Excerpt
+      type: object
+      required:
+      - source_url
+      - excerpt
+      title: Citation
+      description: Source reference for extracted data.
+    NominalOperatingCellTemp:
+      properties:
+        name:
+          type: string
+          const: nominal_operating_cell_temp
+          title: Name
+          default: nominal_operating_cell_temp
+        value:
+          type: number
+          title: Value
+          default: 43.0
+          gt: 0.0
+          le: 100.0
+      type: object
+      title: NominalOperatingCellTemp
+      description: 'Reference temperature (°C) of a solar cell under standard conditions; higher (lower)
+
+        NOCT means hotter (colder) operation and lower (higher) power output.'
+    EVCharging:
+      properties:
+        name:
+          type: string
+          const: ev_charging
+          title: Name
+          default: ev_charging
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: EVCharging
+      description: EV Charging is used
+    ThermalDemandCoolingSensible:
+      type: number
+      minimum: 0.0
+      title: ThermalDemandCoolingSensible
+    WindowPanes:
+      properties:
+        name:
+          type: string
+          const: window_panes
+          title: Name
+          default: window_panes
+        value:
+          $ref: '#/components/schemas/WindowPanesEnum'
+      type: object
+      required:
+      - value
+      title: WindowPanes
+      description: Number of Window Panes
+    CapacityCurve2:
+      items:
+        $ref: '#/components/schemas/Capacity'
+      type: array
+      minItems: 1
+      title: CapacityCurve2
+      description: Temparature-based Parameter Curve
+    WindowMetalFraming:
+      properties:
+        name:
+          type: string
+          const: window_metal_framing
+          title: Name
+          default: window_metal_framing
+        value:
+          type: boolean
+          title: Value
+      type: object
+      required:
+      - value
+      title: WindowMetalFraming
+      description: Windows have Metal Framing
+    Data:
+      properties:
+        location:
+          $ref: '#/components/schemas/BuildingLocation'
+        consumption:
+          $ref: '#/components/schemas/ConsumptionScenarios'
+        production:
+          $ref: '#/components/schemas/ProductionScenarios'
+        storage:
+          $ref: '#/components/schemas/StorageScenarios'
+        costs:
+          $ref: '#/components/schemas/Costs'
+        intervals:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/LongInterval'
+            type: array
+          - items:
+              $ref: '#/components/schemas/WideInterval'
+            type: array
+          title: Intervals
+      type: object
+      required:
+      - location
+      - consumption
+      - production
+      - storage
+      - costs
+      - intervals
+      title: Data
+      description: Meta data for a Calculate Response
+    HVACCoolingCapacity:
+      properties:
+        name:
+          type: string
+          const: hvac_cooling_capacity
+          title: Name
+          default: hvac_cooling_capacity
+        value:
+          $ref: '#/components/schemas/CapacityCurve'
+          title: Value
+      type: object
+      required:
+      - value
+      title: HVACCoolingCapacity
+      description: 'HVAC Cooling Capacity [kBtu/hr] at a specific outdoor dry bulb temperature [°C]
+
+        Ignored when hvac_cooling is False'
+    BuildingType:
+      properties:
+        name:
+          type: string
+          const: building_type
+          title: Name
+          default: building_type
+        value:
+          $ref: '#/components/schemas/BuildingTypeEnum'
+      type: object
+      required:
+      - value
+      title: BuildingType
+      description: Building Type
+    HotTub:
+      properties:
+        name:
+          type: string
+          const: hot_tub
+          title: Name
+          default: hot_tub
+        value:
+          $ref: '#/components/schemas/HotTubEnum'
+      type: object
+      required:
+      - value
+      title: HotTub
+      description: Hot Tub Type
+    VintageEnum:
+      type: string
+      enum:
+      - <1940
+      - 1940s
+      - 1950s
+      - 1960s
+      - 1970s
+      - 1980s
+      - 1990s
+      - 2000s
+      - 2010s
+      title: VintageEnum
+    Periods:
+      items:
+        $ref: '#/components/schemas/Period'
+      type: array
+      minItems: 1
+      title: Periods
+    LightingEnum:
+      type: string
+      enum:
+      - Incandescent
+      - CFL
+      - LED
+      title: LightingEnum
+    WallType:
+      properties:
+        name:
+          type: string
+          const: wall_type
+          title: Name
+          default: wall_type
+        value:
+          $ref: '#/components/schemas/WallTypeEnum'
+      type: object
+      required:
+      - value
+      title: WallType
+      description: Wall Construction Type
+    EIAResidentialStateRateMeta:
+      properties:
+        type:
+          type: string
+          const: eia_residential_state_rate
+          title: Type
+          default: eia_residential_state_rate
+        fuel:
+          $ref: '#/components/schemas/EIAFuelType'
+        state:
+          type: string
+          title: State
+        source:
+          type: string
+          title: Source
+      type: object
+      required:
+      - fuel
+      - state
+      - source
+      title: EIAResidentialStateRateMeta
+      description: Average fuel rate for a state, sourced from EIA
+    WallInsulation:
+      properties:
+        name:
+          type: string
+          const: wall_insulation
+          title: Name
+          default: wall_insulation
+        value:
+          type: integer
+          maximum: 19.0
+          minimum: 1.0
+          title: Value
+      type: object
+      required:
+      - value
+      title: WallInsulation
+      description: 'R-Value of Wall Insulation
+
+        Set to 1 for Uninsulated'
+    Season:
+      properties:
+        description:
+          type: string
+          title: Description
+          description: '[Optional Annotation]'
+        start_month:
+          type: integer
+          maximum: 12.0
+          minimum: 1.0
+          title: Start Month
+        start_day:
+          type: integer
+          maximum: 31.0
+          minimum: 1.0
+          title: Start Day
+        end_month:
+          type: integer
+          maximum: 12.0
+          minimum: 1.0
+          title: End Month
+        end_day:
+          type: integer
+          maximum: 31.0
+          minimum: 1.0
+          title: End Day
+      type: object
+      required:
+      - start_month
+      - start_day
+      - end_month
+      - end_day
+      title: Season
+      description: a range of months and days within a year (inclusive of start and end days)
+    ClipBy:
+      type: string
+      enum:
+      - inner
+      - outer
+      title: ClipBy
+      description: "ClipBy allows control over how the data is clipped to the specified time range.\nFor example, a request for monthly data (Interval='month') from April 15, 2012 to June 15, 2012:\n    * ClipBy='outer': response will include April, May and June but April and June will remain partial months.\n    * ClipBy='inner' (default): response will only include the full month of May."
+    UsageLevel:
+      properties:
+        name:
+          type: string
+          const: usage_level
+          title: Name
+          default: usage_level
+        value:
+          $ref: '#/components/schemas/UsageLevelEnum'
+      type: object
+      required:
+      - value
+      title: UsageLevel
+      description: Usage Level of major appliances and plug loads relative to the national average
+    ConsumptionElectricityCookingRange:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityCookingRange
+    ConsumptionElectricityRefrigerator:
+      type: number
+      minimum: 0.0
+      title: ConsumptionElectricityRefrigerator
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
