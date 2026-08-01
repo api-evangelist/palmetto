@@ -1,0 +1,37 @@
+generated: '2026-07-20'
+method: searched
+source: https://www.npmjs.com/org/palmetto + https://github.com/palmetto
+notes: >-
+  Palmetto does not publish a first-party API client SDK on a package registry;
+  its docs template repo (palmetto-example-ts-energy-and-finance) instead shows
+  how to GENERATE typed Energy and Finance API clients from the OpenAPI specs.
+  The registry-published first-party libraries below are Palmetto's front-end
+  design system (React components + design tokens), not API client SDKs, so no
+  `SDKs` pointer is emitted.
+packages:
+- language: javascript
+  registry: npm
+  name: "@palmetto/palmetto-components"
+  version: 2.8.0
+  url: https://www.npmjs.com/package/@palmetto/palmetto-components
+  install: npm install @palmetto/palmetto-components
+  repository: https://github.com/palmetto/palmetto-components
+  description: React component library that powers all Palmetto UI.
+  kind: ui-components
+  official: true
+- language: javascript
+  registry: npm
+  name: "@palmetto/palmetto-design-tokens"
+  url: https://www.npmjs.com/package/@palmetto/palmetto-design-tokens
+  install: npm install @palmetto/palmetto-design-tokens
+  repository: https://github.com/palmetto/palmetto-design-tokens
+  description: Design tokens that power all Palmetto UIs.
+  kind: design-tokens
+  official: true
+templates:
+- name: palmetto-example-ts-energy-and-finance
+  url: https://github.com/palmetto/palmetto-example-ts-energy-and-finance
+  description: >-
+    Template repo showing how to generate Palmetto Energy and Finance API
+    clients from the OpenAPI specs and use them in a TypeScript project.
+  official: true

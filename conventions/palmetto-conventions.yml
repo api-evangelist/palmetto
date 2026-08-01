@@ -1,0 +1,36 @@
+generated: '2026-07-20'
+method: searched
+source: docs.palmetto.com
+notes: Cross-cutting request/response semantics across Palmetto's three developer products.
+authentication:
+  energy_intelligence: API key in the X-API-Key header
+  energy_platform: Bearer token from POST /api/v1/auth/login (username/password)
+  finance: Bearer token from POST /api/auth/login for machine-to-machine users
+  ref: authentication/palmetto-authentication.yml
+environments:
+  pattern: Separate prod vs next (test/staging) hosts per product
+  ref: lifecycle/palmetto-lifecycle.yml
+versioning:
+  style: uri-path (per-product independent versions)
+idempotency:
+  supported: false
+  notes: No idempotency-key header or idempotency contract is documented in the Palmetto API docs.
+pagination:
+  notes: Not documented at the cross-cutting level; the primary Energy Intelligence endpoint is a single POST calculation.
+error_envelope:
+  energy_intelligence:
+    shape: '{ "detail": [ { "loc": [...], "msg": "...", "type": "..." } ] }'
+    format: FastAPI HTTPValidationError (application/json)
+  ref: errors/palmetto-problem-types.yml
+webhooks:
+  supported: true
+  scope: Finance (LightReach) only
+  verification: [server-api-key (apiKey header), client-headers (clientId/clientSecret), basic-authorization]
+  retries: up to 9 retries with exponential backoff (starts at 3 min); auto-disable after 10 failures
+  ref: asyncapi/palmetto-finance-webhooks.yml
+agent_guidance:
+  notes: >-
+    Finance docs instruct AI agents NOT to sign in to the LightReach portal
+    under a user's personal account; provision a dedicated machine-to-machine
+    (M2M) user that can only authenticate via the API.
+  ref: https://docs.palmetto.com/finance/llms.txt

@@ -1,0 +1,28 @@
+generated: '2026-07-20'
+method: derived
+source: openapi/palmetto-energy-intelligence-openapi.json
+notes: >-
+  Derived from the Energy Intelligence OpenAPI (254 component schemas). This is
+  a calculation/simulation API rather than a CRUD resource API, so the "model"
+  is the composition graph of the CalculateRequest input and CalculateResponse
+  output rather than persisted entities with id references.
+entities:
+- name: CalculateRequest
+  role: input
+  composed_of: [location, parameters, consumption, production, storage, costs]
+- name: BuildingLocation
+  role: input
+  fields: [latitude, longitude, address]
+- name: CalculateRequestParameters
+  role: input
+  fields: [from_datetime, to_datetime, group_by, interval_format, clip_by, variables]
+- name: CalculateResponse
+  role: output
+  composed_of: [version, detail, meta, data]
+relationships:
+- {from: CalculateRequest, to: BuildingLocation, type: has_one, via: location}
+- {from: CalculateRequest, to: CalculateRequestParameters, type: has_one, via: parameters}
+- {from: CalculateRequest, to: ActualConsumption, type: has_many, via: consumption}
+- {from: CalculateRequest, to: ActualProduction, type: has_many, via: production}
+- {from: CalculateRequest, to: BatteryCapacity, type: has_one, via: storage}
+- {from: CalculateRequest, to: costs, type: has_one, via: costs}

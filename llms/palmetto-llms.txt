@@ -1,0 +1,36 @@
+# Palmetto Developer Docs
+
+> Developer documentation for Palmetto APIs: Finance (LightReach), Energy Platform, and Energy Intelligence.
+
+Each product has its own llms.txt with section-specific guidance:
+
+- Finance (LightReach): https://docs.palmetto.com/finance/llms.txt
+- Energy Platform: https://docs.palmetto.com/energy/llms.txt
+- Energy Intelligence: https://docs.palmetto.com/ei-api/llms.txt
+
+## Finance (LightReach)
+
+- [Contracts (v2)](https://docs.palmetto.com/finance/contracts/)
+- [LightReach Direct Pay Integration Guide](https://docs.palmetto.com/finance/direct-pay/integration-guide/)
+- [Documents (v2)](https://docs.palmetto.com/finance/documents/)
+- [Environments](https://docs.palmetto.com/finance/environments/)
+- [Getting Started](https://docs.palmetto.com/finance/getting-started/)
+- [Organizations](https://docs.palmetto.com/finance/organizations/)
+- [Test Data](https://docs.palmetto.com/finance/test-data/)
+- [Users](https://docs.palmetto.com/finance/users/)
+- [Webhooks](https://docs.palmetto.com/finance/webhooks/)
+
+## Energy Platform
+
+- [Environments](https://docs.palmetto.com/energy/environments/)
+- [FAQ](https://docs.palmetto.com/energy/faq/)
+- [Getting Started](https://docs.palmetto.com/energy/getting-started/)
+- [Overview](https://docs.palmetto.com/energy/overview/)
+- [Project Configurations](https://docs.palmetto.com/energy/project-configurations/)
+- [Project Lifecycle](https://docs.palmetto.com/energy/project-lifecycle/)
+- [Statuses and Stages](https://docs.palmetto.com/energy/statuses-stages/)
+- [Subscriptions](https://docs.palmetto.com/energy/subscriptions/)
+
+## Energy Intelligence
+
+- [Energy Intelligence API Overview](https://docs.palmetto.com/ei-api/overview/)

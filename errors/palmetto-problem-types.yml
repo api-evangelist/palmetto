@@ -1,0 +1,18 @@
+generated: '2026-07-20'
+method: derived
+format: json
+source: openapi/palmetto-energy-intelligence-openapi.json
+notes: >-
+  Derived from the Energy Intelligence OpenAPI responses. The API is built on
+  FastAPI: validation errors return HTTP 422 with a JSON body of the shape
+  {"detail": [{"loc": [...], "msg": "...", "type": "..."}]} (HTTPValidationError).
+  Not RFC 9457 problem+json.
+envelope:
+  field: detail
+  schema: HTTPValidationError
+problems:
+- status: 422
+  title: Validation Error
+  schema: HTTPValidationError
+  description: Request body failed validation; details enumerate the failing fields.
+  source_operation: openapi/palmetto-energy-intelligence-openapi.json#calculate_api_v0_bem_calculate_post

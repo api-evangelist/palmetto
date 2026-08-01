@@ -1,0 +1,19 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for Palmetto Energy Intelligence API
+  version: 1.0.0
+extends: openapi/palmetto-energy-intelligence-openapi.json
+actions:
+- target: $.info
+  update:
+    x-apievangelist-provider: palmetto
+    x-apievangelist-product: Energy Intelligence
+    x-apievangelist-auth: API key in X-API-Key header
+    x-apievangelist-docs: https://docs.palmetto.com/ei-api/overview/
+    x-apievangelist-free-tier: Up to 500 API calls per month
+- target: $.paths['/api/v0/bem/calculate'].post
+  update:
+    x-apievangelist-category: building-energy-modeling
+    x-apievangelist-summary: >-
+      Core simulation endpoint: models current and hypothetical home energy
+      consumption, production, cost and emissions at up to hourly granularity.

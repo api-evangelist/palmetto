@@ -1,0 +1,24 @@
+generated: '2026-07-20'
+method: derived
+source: openapi/palmetto-energy-intelligence-openapi.json + docs.palmetto.com
+standards:
+- id: openapi-3.1
+  conforms: true
+  evidence: Energy Intelligence API publishes an OpenAPI 3.1.0 document at https://ei.palmetto.com/openapi.json
+- id: api-key-auth
+  conforms: true
+  evidence: Energy Intelligence uses an apiKey security scheme (X-API-Key header)
+- id: bearer-token-auth
+  conforms: true
+  evidence: Energy Platform and Finance APIs issue Bearer tokens from a login endpoint
+- id: oauth2
+  conforms: false
+  evidence: no oauth2 security scheme declared; auth is API key or username/password bearer login
+- id: openid-connect
+  conforms: false
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: Energy Intelligence 422 errors use application/json (FastAPI HTTPValidationError), not application/problem+json
+- id: webhooks
+  conforms: true
+  evidence: Finance (LightReach) API documents a webhook subscription surface with 30+ event types and signed delivery

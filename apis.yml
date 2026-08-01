@@ -1,8 +1,28 @@
 aid: palmetto
+accessModel:
+  pricing: unknown
+  onboarding: self-serve
+  trial: false
+  try_now: false
+  public: false
+  label: Self-serve signup
+  confidence: medium
+  source:
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/palmetto.png
 name: Palmetto
-description: 'Palmetto is a company surfaced as a portfolio company of social-capital and added to the
-  API Evangelist network as a stub for enrichment. Sector: clean-energy. This profile is a lead awaiting
-  the enrichment pipeline.'
+description: >-
+  Palmetto is a clean-energy technology company that helps homeowners and
+  partners adopt solar, HVAC, battery storage, water heaters and financing. For
+  developers and technology partners it publishes three API products under
+  docs.palmetto.com: the Energy Intelligence API (physics-based building energy
+  modeling and solar simulation for any US home, down to hourly granularity and
+  disaggregated to end use), the Energy Platform API (submit customers, designs
+  and pricing into Palmetto's fulfillment pipeline), and the Finance (LightReach)
+  API for financing clean-energy projects, complete with webhooks. Backed by
+  Social Capital.
 url: https://raw.githubusercontent.com/api-evangelist/palmetto/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
@@ -12,11 +32,84 @@ x-tier: stub
 x-tier-reason: portfolio-lead
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-17'
+modified: '2026-07-20'
 tags:
 - Company
 - Clean Energy
-apis: []
+- Solar
+- Energy
+- Building Energy Modeling
+- Home Energy
+- Financing
+- Sustainability
+apis:
+- name: Palmetto Energy Platform API
+  description: >-
+    Submit customers, designs and pricing into Palmetto's transparent, auditable clean-energy fulfillment
+    pipeline.
+  humanURL: https://docs.palmetto.com/energy/getting-started/
+  baseURL: https://palmetto.energy
+  tags:
+  - Energy Platform
+  - Fulfillment
+  properties:
+  - type: APIReference
+    url: https://docs.palmetto.com/api/energy
+  - type: Documentation
+    url: https://docs.palmetto.com/energy/overview/
+  - type: GettingStarted
+    url: https://docs.palmetto.com/energy/getting-started/
+- name: Palmetto Finance (LightReach) API
+  description: >-
+    Finance solar, storage and other clean-energy projects; includes contracts, documents, organizations,
+    users and a webhook event surface.
+  humanURL: https://docs.palmetto.com/finance/getting-started/
+  baseURL: https://palmetto.finance
+  tags:
+  - Finance
+  - LightReach
+  - Webhooks
+  properties:
+  - type: APIReference
+    url: https://docs.palmetto.com/api/finance
+  - type: Documentation
+    url: https://docs.palmetto.com/finance/getting-started/
+  - type: GettingStarted
+    url: https://docs.palmetto.com/finance/getting-started/
+  - type: Webhooks
+    url: https://docs.palmetto.com/finance/webhooks/
+- aid: palmetto:palmetto-bem-api
+  name: Palmetto Bem API
+  description: The Bem API from Palmetto — 1 operation(s) for bem.
+  humanURL: https://docs.palmetto.com/ei-api/overview/
+  baseURL: https://ei.palmetto.com
+  tags:
+  - Bem
+  properties:
+  - type: OpenAPI
+    url: openapi/palmetto-bem-api-openapi.yml
+  - type: APIReference
+    url: https://docs.palmetto.com/api/ei
+  - type: Documentation
+    url: https://docs.palmetto.com/ei-api/overview/
+  - type: GettingStarted
+    url: https://ei.docs.palmetto.com/docs/getting-started
+- aid: palmetto:palmetto-health-api
+  name: Palmetto Health API
+  description: The Health API from Palmetto — 1 operation(s) for health.
+  humanURL: https://docs.palmetto.com/ei-api/overview/
+  baseURL: https://ei.palmetto.com
+  tags:
+  - Health
+  properties:
+  - type: OpenAPI
+    url: openapi/palmetto-health-api-openapi.yml
+  - type: APIReference
+    url: https://docs.palmetto.com/api/ei
+  - type: Documentation
+    url: https://docs.palmetto.com/ei-api/overview/
+  - type: GettingStarted
+    url: https://ei.docs.palmetto.com/docs/getting-started
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
@@ -25,3 +118,62 @@ maintainers:
 common:
 - type: Website
   url: https://palmetto.com
+- type: DeveloperPortal
+  url: https://docs.palmetto.com
+- type: Documentation
+  url: https://docs.palmetto.com
+- type: GettingStarted
+  url: https://docs.palmetto.com/energy/getting-started/
+- type: Support
+  url: https://help.palmetto.com
+- type: Blog
+  url: https://palmetto.com/blog
+- type: GitHubOrganization
+  url: https://github.com/palmetto
+- type: StatusPage
+  url: https://status.palmetto.com
+- type: Pricing
+  url: https://palmetto.com/business/energy-intelligence-api
+- type: SignUp
+  url: https://ei.docs.palmetto.com/docs/getting-started
+- type: TermsOfService
+  url: https://palmetto.com/terms-of-service
+- type: PrivacyPolicy
+  url: https://palmetto.com/legal/privacy-policy
+- type: Authentication
+  url: authentication/palmetto-authentication.yml
+- type: DomainSecurity
+  url: security/palmetto-domain-security.yml
+- type: Packages
+  url: packages/palmetto-packages.yml
+- type: Components
+  url: components/palmetto-components.yml
+- type: WellKnown
+  url: well-known/palmetto-well-known.yml
+- type: MCPServer
+  url: mcp/palmetto-mcp.yml
+- type: LLMsTxt
+  url: llms/palmetto-llms.txt
+- type: Overlay
+  url: overlays/palmetto-energy-intelligence-overlay.yaml
+- type: Conformance
+  url: conformance/palmetto-conformance.yml
+- type: ErrorCatalog
+  url: errors/palmetto-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/palmetto-lifecycle.yml
+- type: Sandbox
+  url: sandbox/palmetto-sandbox.yml
+- type: Conventions
+  url: conventions/palmetto-conventions.yml
+- type: DataModel
+  url: data-model/palmetto-data-model.yml
+- type: Webhooks
+  url: asyncapi/palmetto-finance-webhooks.yml
+- type: AgentSkill
+  url: skills/palmetto-model-home-energy.md
+x-enrichment:
+  date: '2026-07-20'
+  status: enriched
+  artifacts_added: 17
+  pass: local-v1

@@ -1,0 +1,22 @@
+generated: '2026-07-20'
+method: searched
+source: docs.palmetto.com + status.palmetto.com
+versioning:
+  scheme: uri-path
+  notes: >-
+    Each product versions independently in the URI path. Energy Intelligence is
+    at /api/v0; the Energy Platform auth is at /api/v1; Finance (LightReach)
+    documents Contracts/Documents at v2.
+  products:
+  - {product: Energy Intelligence, version: v0}
+  - {product: Energy Platform, version: v1}
+  - {product: Finance (LightReach), version: v2}
+environments:
+- {product: Energy Intelligence, base_url: https://ei.palmetto.com}
+- {product: Energy Platform, prod: https://palmetto.energy, next: https://next.palmetto.energy}
+- {product: Finance (LightReach), prod: https://palmetto.finance, next: https://next.palmetto.finance}
+status_page: https://status.palmetto.com
+deprecation:
+  policy_url: null
+  sunset_header: null
+  notes: No formal deprecation policy or RFC 8594 Sunset/Deprecation header support was found in the docs.

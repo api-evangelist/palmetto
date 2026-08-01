@@ -1,0 +1,39 @@
+generated: '2026-07-20'
+method: searched
+source: https://docs.palmetto.com/finance/webhooks/
+spec_type: Webhooks
+notes: >-
+  The Finance (LightReach) API documents a webhook subscription surface. No
+  AsyncAPI document is published, so this captures the webhook catalog as a
+  Webhooks artifact. Webhooks are configured by creating a registration (with a
+  hostUrl) and subscribing to event types with an endpointUrl; the delivery URL
+  is hostUrl + endpointUrl.
+delivery:
+  verification:
+  - {method: server-api-key, detail: Palmetto-generated key returned at registration; sent as an apiKey header (default)}
+  - {method: client-headers, detail: caller-supplied clientId and clientSecret headers}
+  - {method: basic-authorization, detail: caller-supplied Authorization header with base64 credentials}
+  retries: Up to 9 retries with exponential backoff starting at 3 minutes
+  retryable: [5xx, 429, timeouts]
+  non_retryable: [4xx except 429, invalid URLs]
+  auto_disable: After 10 total failures the subscription is auto-disabled and can be re-enabled to replay skipped events
+  scoping: Events scoped to the registered organization unless includeVisibleOrgEvents is set
+events:
+- accountCreated
+- accountUpdated
+- sendInvite
+- contractApproved
+- contractSent
+- contractSigned
+- contractVoided
+- documentUploaded
+- documentStatus
+- quoteCreated
+- quoteVoided
+- milestoneAchieved
+- milestoneStatusChanged
+- allEvents
+event_note: >-
+  30+ event types are supported across Account, Contracts, Documents, Quotes
+  and Milestones domains; the list above captures the documented examples plus
+  the allEvents catch-all.

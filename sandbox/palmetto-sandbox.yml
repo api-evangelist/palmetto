@@ -1,0 +1,33 @@
+generated: '2026-07-20'
+method: searched
+source: https://docs.palmetto.com/finance/test-data/ + https://docs.palmetto.com/finance/environments/
+notes: >-
+  Palmetto Finance (LightReach) publishes a dedicated Next (test/staging)
+  environment and a credit-check test-data set. Energy Intelligence offers a
+  free sandbox signup for an API key. Test values below are published verbatim
+  by Palmetto; do not use in Production ("ALL TESTING SHOULD BE DONE IN NEXT").
+test_vs_live:
+  finance:
+    prod: https://palmetto.finance
+    next: https://next.palmetto.finance
+    rule: All testing must be done in Next; creating test resources in Production may result in access revocation.
+  energy:
+    prod: https://palmetto.energy
+    next: https://next.palmetto.energy
+  energy_intelligence:
+    sandbox_signup: https://ei.docs.palmetto.com/docs/getting-started
+    free_tier: Up to 500 API calls per month
+test_data:
+  docs: https://docs.palmetto.com/finance/test-data/
+  simulated_credit_check_no_provider:
+    ssn_range: "500101005 - 500101017"
+    notes: Each SSN in the range triggers a different finance decision (approved with stipulations, declined, or credit frozen). Names and addresses accept any value.
+  transunion_sandbox:
+    profiles:
+    - {name: "Cranberry Saucey", address: "876 Turkey St, Fantasy Island, IL 60750", ssn: "666222525"}
+    - {name: "Alfredo Sanchez", address: "2821 Warren Dorris dr, Joliet, IL 60435", ssn: "666427102"}
+    - {name: "Sarah Knesley", address: "104 Bonita Avenue, Fowler, CA 93625", ssn: "666563316"}
+  equifax_sandbox:
+    ssn_prefix: "666"
+    example_ssns: ["666014657", "666015082"]
+  note: SSNs beginning with 666 and in the 500101xxx range are designated sandbox test values.

@@ -1,0 +1,7 @@
+generated: '2026-07-20'
+method: generated
+skills:
+- file: palmetto-model-home-energy.md
+  name: Model a home's energy with Palmetto Energy Intelligence
+  api: openapi/palmetto-energy-intelligence-openapi.json
+  operations: [health_api_v0_health_get, calculate_api_v0_bem_calculate_post]

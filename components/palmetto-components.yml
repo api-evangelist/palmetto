@@ -1,0 +1,19 @@
+generated: '2026-07-20'
+method: searched
+source: https://github.com/palmetto/palmetto-components
+notes: >-
+  Client-side UI component system Palmetto publishes for building on its
+  platform. Distinct from server-side API SDKs (see packages/).
+families:
+- name: Palmetto Components
+  kind: react-component-library
+  loader: "@palmetto/palmetto-components"
+  registry: https://www.npmjs.com/package/@palmetto/palmetto-components
+  repository: https://github.com/palmetto/palmetto-components
+  description: React component library that powers all Palmetto UI.
+- name: Palmetto Design Tokens
+  kind: design-tokens
+  loader: "@palmetto/palmetto-design-tokens"
+  registry: https://www.npmjs.com/package/@palmetto/palmetto-design-tokens
+  repository: https://github.com/palmetto/palmetto-design-tokens
+  description: Design tokens (color, spacing, type) shared across all Palmetto UIs.

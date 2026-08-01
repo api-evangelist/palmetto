@@ -1,0 +1,49 @@
+generated: '2026-07-20'
+method: searched
+source: openapi/palmetto-energy-intelligence-openapi.json
+docs: https://docs.palmetto.com/
+summary:
+  types:
+  - apiKey
+  - http
+  api_key_in:
+  - header
+  notes: >-
+    Palmetto ships three developer products with two distinct auth models.
+    Energy Intelligence uses a static API key sent in the X-API-Key header.
+    The Energy Platform and Finance (LightReach) APIs use bearer tokens
+    obtained from a username/password login endpoint (machine-to-machine
+    users), cached until expiry and refreshed via the login/refresh flow.
+schemes:
+- name: APIKeyHeader
+  product: Energy Intelligence
+  type: apiKey
+  in: header
+  parameter: X-API-Key
+  docs: https://docs.palmetto.com/ei-api/overview/
+  sources:
+  - openapi/palmetto-energy-intelligence-openapi.json
+- name: BearerLogin
+  product: Energy Platform
+  type: http
+  scheme: bearer
+  token_type: Bearer
+  login_endpoint: POST https://api.palmetto.com/api/v1/auth/login
+  login_endpoint_next: POST https://api-next.palmetto.com/api/v1/auth/login
+  request: '{ "username": "string", "password": "string" }'
+  response_fields: [access_token, expires_in, refresh_token, token_type]
+  docs: https://docs.palmetto.com/energy/environments/
+  sources:
+  - https://docs.palmetto.com/energy/getting-started/
+- name: BearerLoginM2M
+  product: Finance (LightReach)
+  type: http
+  scheme: bearer
+  token_type: Bearer
+  login_endpoint: POST ${envBaseUrl}/api/auth/login
+  request: '{ "username": "string", "password": "string" }'
+  response_fields: [access_token, expires_in, refresh_token, token_type]
+  identity: machine-to-machine (M2M) user; cannot sign in to the portal
+  docs: https://docs.palmetto.com/finance/getting-started/
+  sources:
+  - https://docs.palmetto.com/finance/getting-started/

@@ -1,0 +1,16 @@
+{
+  "provider": "palmetto",
+  "sources": [
+    "palmetto-bem-api-openapi.yml",
+    "palmetto-health-api-openapi.yml"
+  ],
+  "outputs": [
+    "palmetto-bem-api-openapi.yml",
+    "palmetto-health-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}
