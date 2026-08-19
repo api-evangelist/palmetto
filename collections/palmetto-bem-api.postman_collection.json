@@ -1,0 +1,207 @@
+{
+  "item": [
+    {
+      "id": "e49f4451-e100-4c0e-a849-4fc265ed7c0f",
+      "name": "Bem",
+      "description": {
+        "content": "",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "405cf51e-9e83-403e-9b02-3ae1d392493d",
+          "name": "Calculate",
+          "request": {
+            "name": "Calculate",
+            "description": {
+              "content": "Calculate energy consumption, production, costs and emissions",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "v0",
+                "bem",
+                "calculate"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "X-API-Key"
+                },
+                {
+                  "key": "value",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "in",
+                  "value": "header"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": {\n    \"latitude\": \"<number>\",\n    \"longitude\": \"<number>\"\n  },\n  \"parameters\": {\n    \"from_datetime\": \"<dateTime>\",\n    \"to_datetime\": \"<dateTime>\",\n    \"variables\": \"<string>\",\n    \"interval_format\": \"long\",\n    \"group_by\": \"year\",\n    \"clip_by\": \"inner\",\n    \"use_actual_weather\": false\n  },\n  \"consumption\": {\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ]\n    },\n    \"actuals\": [\n      {\n        \"from_datetime\": \"<dateTime>\",\n        \"to_datetime\": \"<dateTime>\",\n        \"variable\": \"<string>\",\n        \"value\": \"<number>\"\n      }\n    ],\n    \"calibration\": {\n      \"method\": \"uniform-mean\",\n      \"apply_residuals\": true,\n      \"sample_size\": 35,\n      \"sample_seed\": \"<integer>\",\n      \"ensemble_aggregation_method\": \"nearest\",\n      \"use_actual_weather\": false\n    }\n  },\n  \"production\": {\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ]\n    },\n    \"actuals\": [\n      {\n        \"from_datetime\": \"<dateTime>\",\n        \"to_datetime\": \"<dateTime>\",\n        \"variable\": \"<string>\",\n        \"value\": \"<number>\"\n      }\n    ],\n    \"calibration\": {\n      \"method\": \"uniform-mean\",\n      \"use_actual_weather\": false\n    }\n  },\n  \"storage\": {\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ]\n    }\n  },\n  \"costs\": {\n    \"utility_rates\": {\n      \"electricity\": {\n        \"value\": \"<number>\",\n        \"type\": \"flat_rate\",\n        \"units\": \"$/kWh\"\n      },\n      \"fossil_fuel\": {\n        \"value\": \"<number>\",\n        \"type\": \"flat_rate\",\n        \"units\": \"$/kWh\"\n      },\n      \"pv_ppa\": {\n        \"value\": \"<number>\",\n        \"type\": \"flat_rate\",\n        \"units\": \"$/kWh\"\n      },\n      \"pv_buyback\": {\n        \"value\": \"<number>\",\n        \"type\": \"flat_rate\",\n        \"units\": \"$/kWh\"\n      }\n    },\n    \"emission_rates\": {\n      \"electricity\": {\n        \"value\": \"<number>\",\n        \"units\": \"kgCO2e/kWh\"\n      },\n      \"fossil_fuel\": {\n        \"value\": \"<number>\",\n        \"units\": \"kgCO2e/kWh\"\n      }\n    },\n    \"fossil_fuel_type\": \"<string>\",\n    \"use_tariff_history\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "4392dbee-a322-40c2-9014-26a471759e14",
+              "name": "Successful Response",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v0",
+                    "bem",
+                    "calculate"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"location\": {\n    \"latitude\": 37.7749,\n    \"longitude\": -122.4194\n  },\n  \"parameters\": {\n    \"clip_by\": \"inner\",\n    \"from_datetime\": \"2023-01-01T00:00:00\",\n    \"group_by\": \"month\",\n    \"interval_format\": \"long\",\n    \"to_datetime\": \"2024-01-01T00:00:00\",\n    \"variables\": [\n      \"consumption.electricity\"\n    ]\n  },\n  \"consumption\": {\n    \"actuals\": [\n      {\n        \"from_datetime\": \"2023-01-01T00:00:00\",\n        \"to_datetime\": \"2024-01-01T00:00:00\",\n        \"value\": 3774,\n        \"variable\": \"consumption.electricity\"\n      }\n    ],\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"name\": \"building_type\",\n          \"value\": \"Single-Family Detached\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"name\": \"building_type\",\n          \"value\": \"Single-Family Detached\"\n        }\n      ]\n    },\n    \"calibration\": {\n      \"apply_residuals\": true,\n      \"method\": \"uniform-mean\",\n      \"sample_size\": 35\n    }\n  },\n  \"production\": {\n    \"actuals\": [\n      {\n        \"from_datetime\": \"2023-01-01T00:00:00\",\n        \"to_datetime\": \"2024-01-01T00:00:00\",\n        \"value\": 7.3,\n        \"variable\": \"production.electricity\"\n      }\n    ],\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"name\": \"panel_arrays\",\n          \"value\": [\n            {\n              \"azimuth\": 180,\n              \"capacity\": 10,\n              \"tilt\": 30\n            }\n          ]\n        }\n      ],\n      \"hypothetical\": []\n    },\n    \"calibration\": {\n      \"method\": \"uniform-mean\"\n    }\n  },\n  \"storage\": {\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"name\": \"capacity\",\n          \"value\": 10\n        },\n        {\n          \"name\": \"power\",\n          \"value\": 5\n        },\n        {\n          \"name\": \"capacity_recommendation_quantile\",\n          \"value\": 0.5\n        }\n      ],\n      \"hypothetical\": []\n    }\n  },\n  \"costs\": {\n    \"emission_rates\": {\n      \"electricity\": {\n        \"units\": \"kgCO2e/kWh\",\n        \"value\": 0.47045\n      },\n      \"fossil_fuel\": {\n        \"units\": \"kgCO2e/kWh\",\n        \"value\": 0.1872057318321392\n      }\n    },\n    \"utility_rates\": {\n      \"electricity\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.29305\n      },\n      \"fossil_fuel\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.069771\n      },\n      \"pv_buyback\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.2\n      },\n      \"pv_ppa\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.26\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"meta\": {\n    \"parameters\": {\n      \"from_datetime\": \"2019-01-01T00:00:00\",\n      \"to_datetime\": \"2020-01-01T00:00:00\",\n      \"variables\": \"string\",\n      \"interval_format\": \"long\",\n      \"group_by\": \"year\",\n      \"clip_by\": \"inner\",\n      \"use_actual_weather\": false\n    },\n    \"units\": {\n      \"thermal_demand\": \"kBtu\",\n      \"consumption\": \"kWh\",\n      \"production\": \"kWh\",\n      \"storage\": \"kWh\",\n      \"grid\": \"kWh\",\n      \"emissions\": \"kgCO2e\",\n      \"costs\": \"$\",\n      \"air_temperature\": \"°C\",\n      \"relative_humidity\": \"%\",\n      \"wind_speed\": \"m/s\",\n      \"ghi\": \"kWh/m²\",\n      \"dni\": \"kWh/m²\",\n      \"dhi\": \"kWh/m²\"\n    },\n    \"sources\": {\n      \"building_type_source\": \"resstock\",\n      \"floor_area_source\": \"regrid\",\n      \"floor_area_source_model\": \"regressors from glide and mapdwell API w/o num stories\",\n      \"heating_fuel_source\": \"resstock\",\n      \"vintage_source\": \"resstock\",\n      \"num_stories_source\": \"regrid\",\n      \"census_block_group_geoid\": \"string\",\n      \"regrid_parcel_uuid\": \"83448858-2dc0-c520-b3c1-2e2595fd755b\"\n    },\n    \"warnings\": [\n      \"string\",\n      \"string\"\n    ]\n  },\n  \"data\": {\n    \"location\": {\n      \"puma_fips\": \"string\",\n      \"county\": \"string\",\n      \"county_fips\": \"string\",\n      \"state\": \"string\",\n      \"state_fips\": \"string\",\n      \"climate_zone\": \"6A\",\n      \"latitude\": 537.8204852744961,\n      \"longitude\": 4125.721736038606,\n      \"timezone\": \"Asia/Macao\",\n      \"address\": \"string\"\n    },\n    \"consumption\": {\n      \"baseline\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ]\n    },\n    \"production\": {\n      \"baseline\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ]\n    },\n    \"storage\": {\n      \"baseline\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        },\n        {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      ]\n    },\n    \"costs\": {\n      \"utility_rates\": {\n        \"fossil_fuel\": {\n          \"value\": 5170.103839823116,\n          \"type\": \"flat_rate\",\n          \"units\": \"$/kWh\",\n          \"meta\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        },\n        \"electricity\": {\n          \"value\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"type\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"units\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"meta\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        },\n        \"pv_ppa\": {\n          \"value\": 3621.038424497495,\n          \"type\": \"flat_rate\",\n          \"units\": \"$/kWh\",\n          \"meta\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        },\n        \"pv_buyback\": {\n          \"value\": 8995.228124827172,\n          \"type\": \"flat_rate\",\n          \"units\": \"$/kWh\",\n          \"meta\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"emission_rates\": {\n        \"electricity\": {\n          \"value\": 3976.4829720848493,\n          \"units\": \"kgCO2e/kWh\",\n          \"meta\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        },\n        \"fossil_fuel\": {\n          \"value\": 3122.498647035823,\n          \"units\": \"kgCO2e/kWh\",\n          \"meta\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"fossil_fuel_type\": \"fuel_oil\"\n    },\n    \"intervals\": [\n      {\n        \"from_datetime\": \"1998-01-11T09:35:13.475Z\",\n        \"to_datetime\": \"2013-05-16T05:45:43.038Z\",\n        \"variable\": \"emissions.electricity\",\n        \"value\": 3339.500969154273\n      },\n      {\n        \"from_datetime\": \"1983-05-02T06:31:58.605Z\",\n        \"to_datetime\": \"1996-06-27T08:01:10.935Z\",\n        \"variable\": \"thermal_demand.heating.unutilized\",\n        \"value\": 1675.0335364755654\n      }\n    ]\n  },\n  \"version\": \"v2.46.2-9b9d19f\",\n  \"detail\": \"success\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "698386f9-8a8a-419f-853e-478010091d93",
+              "name": "Validation Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v0",
+                    "bem",
+                    "calculate"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"location\": {\n    \"latitude\": 37.7749,\n    \"longitude\": -122.4194\n  },\n  \"parameters\": {\n    \"clip_by\": \"inner\",\n    \"from_datetime\": \"2023-01-01T00:00:00\",\n    \"group_by\": \"month\",\n    \"interval_format\": \"long\",\n    \"to_datetime\": \"2024-01-01T00:00:00\",\n    \"variables\": [\n      \"consumption.electricity\"\n    ]\n  },\n  \"consumption\": {\n    \"actuals\": [\n      {\n        \"from_datetime\": \"2023-01-01T00:00:00\",\n        \"to_datetime\": \"2024-01-01T00:00:00\",\n        \"value\": 3774,\n        \"variable\": \"consumption.electricity\"\n      }\n    ],\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"name\": \"building_type\",\n          \"value\": \"Single-Family Detached\"\n        }\n      ],\n      \"hypothetical\": [\n        {\n          \"name\": \"building_type\",\n          \"value\": \"Single-Family Detached\"\n        }\n      ]\n    },\n    \"calibration\": {\n      \"apply_residuals\": true,\n      \"method\": \"uniform-mean\",\n      \"sample_size\": 35\n    }\n  },\n  \"production\": {\n    \"actuals\": [\n      {\n        \"from_datetime\": \"2023-01-01T00:00:00\",\n        \"to_datetime\": \"2024-01-01T00:00:00\",\n        \"value\": 7.3,\n        \"variable\": \"production.electricity\"\n      }\n    ],\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"name\": \"panel_arrays\",\n          \"value\": [\n            {\n              \"azimuth\": 180,\n              \"capacity\": 10,\n              \"tilt\": 30\n            }\n          ]\n        }\n      ],\n      \"hypothetical\": []\n    },\n    \"calibration\": {\n      \"method\": \"uniform-mean\"\n    }\n  },\n  \"storage\": {\n    \"attributes\": {\n      \"baseline\": [\n        {\n          \"name\": \"capacity\",\n          \"value\": 10\n        },\n        {\n          \"name\": \"power\",\n          \"value\": 5\n        },\n        {\n          \"name\": \"capacity_recommendation_quantile\",\n          \"value\": 0.5\n        }\n      ],\n      \"hypothetical\": []\n    }\n  },\n  \"costs\": {\n    \"emission_rates\": {\n      \"electricity\": {\n        \"units\": \"kgCO2e/kWh\",\n        \"value\": 0.47045\n      },\n      \"fossil_fuel\": {\n        \"units\": \"kgCO2e/kWh\",\n        \"value\": 0.1872057318321392\n      }\n    },\n    \"utility_rates\": {\n      \"electricity\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.29305\n      },\n      \"fossil_fuel\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.069771\n      },\n      \"pv_buyback\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.2\n      },\n      \"pv_ppa\": {\n        \"units\": \"$/kWh\",\n        \"value\": 0.26\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": [\n    {\n      \"loc\": [\n        \"string\",\n        \"string\"\n      ],\n      \"msg\": \"string\",\n      \"type\": \"string\"\n    },\n    {\n      \"loc\": [\n        \"string\",\n        \"string\"\n      ],\n      \"msg\": \"string\",\n      \"type\": \"string\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://ei.palmetto.com",
+      "key": "baseUrl"
+    }
+  ],
+  "info": {
+    "_postman_id": "d2c74dc7-3163-41a7-8e13-3102484c9239",
+    "name": "Palmetto Energy Intelligence Bem API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "",
+      "type": "text/plain"
+    }
+  }
+}

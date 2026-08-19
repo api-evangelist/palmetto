@@ -1,0 +1,39 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Palmetto Energy Intelligence Bem API",
+    "version": "v0.32.2-19a9666"
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Bem",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Calculate",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://ei.palmetto.com/api/v0/bem/calculate",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "apikey",
+              "key": "X-API-Key",
+              "value": "{{X-API-Key}}",
+              "placement": "header"
+            }
+          },
+          "docs": "Calculate energy consumption, production, costs and emissions"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

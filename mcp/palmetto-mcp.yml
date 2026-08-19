@@ -2,10 +2,9 @@ generated: '2026-07-20'
 method: derived
 status: candidate
 source: openapi/palmetto-energy-intelligence-openapi.json
-notes: >-
-  No official hosted/remote MCP server was found for Palmetto. Candidate tool
-  list derived one-to-one from the Energy Intelligence OpenAPI operations so an
-  MCP wrapper could be generated. Not an official Palmetto server.
+notes: No official hosted/remote MCP server was found for Palmetto. Candidate tool list derived one-to-one
+  from the Energy Intelligence OpenAPI operations so an MCP wrapper could be generated. Not an official
+  Palmetto server.
 server:
   name: palmetto-energy-intelligence
   transport: http
@@ -14,8 +13,12 @@ tools:
   description: Check the health of the Energy Intelligence service.
   source_operation: openapi/palmetto-energy-intelligence-openapi.json#health_api_v0_health_get
 - name: calculate
-  description: >-
-    Calculate a home's energy consumption, production, costs and emissions
-    (building energy modeling / solar simulation), including baseline vs
-    hypothetical scenario modeling.
+  description: Calculate a home's energy consumption, production, costs and emissions (building energy
+    modeling / solar simulation), including baseline vs hypothetical scenario modeling.
   source_operation: openapi/palmetto-energy-intelligence-openapi.json#calculate_api_v0_bem_calculate_post
+deployment:
+  mode: none
+  verified: derived
+  tools: 2
+  checked: '2026-08-12'
+  source: catalog MCP census
