@@ -68,6 +68,10 @@ apis:
   tags:
   - Finance
   - LightReach
+  - Webhook
+  tags_raw:
+  - Finance
+  - LightReach
   - Webhooks
   properties:
   - type: APIReference
