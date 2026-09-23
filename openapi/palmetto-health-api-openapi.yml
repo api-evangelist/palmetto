@@ -1,6 +1,6 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Palmetto Energy Intelligence Bem Health API
+  title: Palmetto Energy Intelligence Health API
   version: v0.32.2-19a9666
 servers:
 - url: https://ei.palmetto.com

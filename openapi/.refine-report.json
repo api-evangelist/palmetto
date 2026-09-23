@@ -1,8 +1,7 @@
 {
   "provider": "palmetto",
   "sources": [
-    "palmetto-bem-api-openapi.yml",
-    "palmetto-health-api-openapi.yml"
+    "_original/palmetto-energy-intelligence-openapi.json"
   ],
   "outputs": [
     "palmetto-bem-api-openapi.yml",
@@ -11,6 +10,17 @@
   "archived": [],
   "errors": [],
   "warnings": [],
-  "notes": [],
-  "skipped": []
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "palmetto-energy-intelligence-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "palmetto-energy-intelligence-openapi.json: tagged paths GET /api/v0/health -> Health",
+    "palmetto-energy-intelligence-openapi.json: tagged paths POST /api/v0/bem/calculate -> Bem",
+    "palmetto-energy-intelligence-openapi.json: declared missing tag: Bem",
+    "palmetto-energy-intelligence-openapi.json: declared missing tag: Health",
+    "apis.yml register: already-registered"
+  ],
+  "skipped": [
+    "palmetto-bem-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "palmetto-health-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }
